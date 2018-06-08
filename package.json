@@ -1,4 +1,10 @@
 {
+  "name": "bitdummies",
+  "version": "0.0.1",
+  "description": "Website for selling Crypto merchandise",
+  "private": true,
+  "author": "Mohit Sakhuja",
+  "license": "MIT",
   "devDependencies": {
     "babel-eslint": "^8.2.3",
     "eslint": "^4.19.1",
