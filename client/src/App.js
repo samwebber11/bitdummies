@@ -1,23 +1,23 @@
 import React, { Component } from 'react'
-import logo from './logo.svg'
+
+import Navbar from './components/Navbar'
+import Home from './components/Home'
+import Footer from './components/Footer'
+
 import './App.css'
 
 class App extends Component {
+  state = {
+    loggedIn: false,
+    cart: 0,
+  }
+
   render() {
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
-        </header>
-        <p className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
-        </p>
-        <p>
-          Add a proxy to client's package.json with text:
-          "http://localhost:PORT"
-        </p>
-        <p>Here PORT will be the port that backend is running on. (3001)</p>
+      <div className="">
+        <Navbar cart={this.state.cart} />
+        <Home />
+        <Footer />
       </div>
     )
   }
