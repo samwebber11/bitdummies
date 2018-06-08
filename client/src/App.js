@@ -1,7 +1,8 @@
 import React, { Component } from 'react'
+import { Route } from 'react-router-dom'
 
 import Navbar from './components/Navbar'
-import Home from './components/Home'
+import Home from './components/screens/Home/index'
 import Footer from './components/Footer'
 
 import './App.css'
@@ -14,9 +15,9 @@ class App extends Component {
 
   render() {
     return (
-      <div className="">
+      <div>
         <Navbar cart={this.state.cart} />
-        <Home />
+        <Route exact path="/" component={Home} />
         <Footer />
       </div>
     )
