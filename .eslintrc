@@ -58,6 +58,26 @@
         ]
       }
     ],
+    "react/prefer-stateless-function": "off",
+    "jsx-a11y/label-has-for": "off",
+    "jsx-a11y/anchor-is-valid": [
+      "error",
+      {
+        "components": [
+          "Link"
+        ],
+        "specialLink": [
+          "to",
+          "hrefLeft",
+          "hrefRight"
+        ],
+        "aspects": [
+          "noHref",
+          "invalidHref",
+          "preferButton"
+        ]
+      }
+    ],
     "radix": [
       "error",
       "as-needed"
