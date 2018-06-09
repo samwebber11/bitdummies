@@ -3,6 +3,7 @@ import { Route } from 'react-router-dom'
 
 import Navbar from './components/Navbar'
 import HomeScreen from './components/screens/HomeScreen/index'
+import ProductsScreen from './components/screens/ProductsScreen'
 import SignupScreen from './components/screens/SignupScreen'
 import Footer from './components/Footer'
 
@@ -19,6 +20,7 @@ class App extends Component {
       <div>
         <Navbar cart={this.state.cart} />
         <Route exact path="/" component={HomeScreen} />
+        <Route path="/products" component={ProductsScreen} />
         <Route path="/login" component={SignupScreen} />
         <Footer />
       </div>
