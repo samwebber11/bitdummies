@@ -11,14 +11,13 @@ import './App.css'
 
 class App extends Component {
   state = {
-    loggedIn: false,
-    cart: 0,
+    activeTab: 'home',
   }
 
   render() {
     return (
       <div>
-        <Navbar cart={this.state.cart} />
+        <Navbar activeTab={this.state.activeTab} />
         <Route exact path="/" component={HomeScreen} />
         <Route path="/products" component={ProductsScreen} />
         <Route path="/login" component={SignupScreen} />

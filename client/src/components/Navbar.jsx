@@ -4,7 +4,7 @@ import propTypes from 'prop-types'
 
 class Navbar extends Component {
   state = {
-    cart: this.props.cart,
+    activeTab: this.props.activeTab,
   }
 
   render() {
@@ -16,23 +16,63 @@ class Navbar extends Component {
           </Link>
           <div>
             <ul className="navbar-nav">
-              <li className="nav-item active">
-                <Link className="nav-link" to="/">
-                  Home <span className="sr-only">(current)</span>
+              <li
+                className={`nav-item ${
+                  this.state.activeTab === 'home' ? 'active' : ''
+                }`}
+              >
+                <Link
+                  className="nav-link"
+                  to="/"
+                  onClick={() => {
+                    this.setState({ activeTab: 'home' })
+                  }}
+                >
+                  Home
                 </Link>
               </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/products">
+              <li
+                className={`nav-item ${
+                  this.state.activeTab === 'products' ? 'active' : ''
+                }`}
+              >
+                <Link
+                  className="nav-link"
+                  to="/products"
+                  onClick={() => {
+                    this.setState({ activeTab: 'products' })
+                  }}
+                >
                   Products
                 </Link>
               </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/login">
+              <li
+                className={`nav-item ${
+                  this.state.activeTab === 'login' ? 'active' : ''
+                }`}
+              >
+                <Link
+                  className="nav-link"
+                  to="/login"
+                  onClick={() => {
+                    this.setState({ activeTab: 'login' })
+                  }}
+                >
                   Signup/Signin
                 </Link>
               </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/cart">
+              <li
+                className={`nav-item ${
+                  this.state.activeTab === 'cart' ? 'active' : ''
+                }`}
+              >
+                <Link
+                  className="nav-link"
+                  to="/cart"
+                  onClick={() => {
+                    this.setState({ activeTab: 'cart' })
+                  }}
+                >
                   Cart ({this.state.cart})
                 </Link>
               </li>
@@ -45,11 +85,7 @@ class Navbar extends Component {
 }
 
 Navbar.propTypes = {
-  cart: propTypes.number,
-}
-
-Navbar.defaultProps = {
-  cart: 0,
+  activeTab: propTypes.string.isRequired,
 }
 
 export default Navbar
