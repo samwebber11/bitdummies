@@ -8,7 +8,6 @@ import App from './App'
 import registerServiceWorker from './registerServiceWorker'
 
 import './static/icons/fontawesome-all.min.css'
-
 import './index.css'
 
 ReactDOM.render(
