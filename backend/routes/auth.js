@@ -1,27 +1,40 @@
 import express from 'express'
-import passport from 'passport'
+
+import passport from '../passport'
 
 const router = express.Router()
 
+// Authenticate with Google.
 router.get(
-  '/auth/google',
+  '/google',
   passport.authenticate('google', {
     scope: ['profile'],
   })
 )
 
+// Callback route for Google to redirect to.
 router.get(
-  '/auth/google/redirect',
+  '/google/redirect',
   passport.authenticate('google', {
     successRedirect: '/',
-    failureRedirect: '/auth/login',
+    failureRedirect: '/login',
   })
 )
+
+// this route is just used to get the user basic info
+router.get('/user', (req, res, next) => {
+  console.log('===== user!!======')
+  console.log(req.user)
+  if (req.user) {
+    return res.json({ user: req.user })
+  }
+  return res.json({ user: null })
+})
 
 router.post('/logout', (req, res) => {
   if (req.user) {
     req.session.destroy()
-    req.logout()
+    // req.logout()
     res.clearCookie('connect.sid')
     return res.json({ msg: 'logging you out' })
   }
