@@ -1,5 +1,7 @@
 import React from 'react'
 
+import { Link } from 'react-router-dom'
+
 const SignupScreen = ({ isLoggedIn }) => (
   <div className="d-flex justify-content-center align-items-center m-5">
     <div className="card">
@@ -10,9 +12,12 @@ const SignupScreen = ({ isLoggedIn }) => (
         <button className="btn btn-lg btn-primary col-md-12 m-2">
           Continue with Facebook
         </button>
-        <button className="btn btn-lg btn-danger col-md-12 m-2">
+        <a
+          className="btn btn-lg btn-danger col-md-12 m-2"
+          href="http://localhost:3001/auth/google"
+        >
           Continue with Google
-        </button>
+        </a>
       </div>
       <div className="card-footer text-muted small">
         By logging in, you agree to BitDummies' Privacy Policy and Terms of
