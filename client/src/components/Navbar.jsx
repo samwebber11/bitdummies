@@ -2,80 +2,44 @@ import React, { Component } from 'react'
 import { Link } from 'react-router-dom'
 import propTypes from 'prop-types'
 
+import logo from '../logo.svg'
+
 class Navbar extends Component {
   state = {
     activeTab: this.props.activeTab,
   }
 
+  generateListItem = (title, tabName, to, rest) => (
+    <li
+      className={`nav-item ${this.state.activeTab === tabName ? 'active' : ''}`}
+    >
+      <Link
+        className="nav-link"
+        to={to}
+        onClick={() => this.setState({ activeTab: tabName })}
+      >
+        {title}
+        {rest}
+      </Link>
+    </li>
+  )
+
   render() {
     return (
       <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div className="container d-flex justify-content-between">
-          <Link className="navbar-brand" to="/">
-            BitDummies
-          </Link>
+        <div className="container d-flex justify-content-between align-items-center">
+          <div>
+            <Link className="navbar-brand d-flex align-items-center" to="/">
+              <img src={logo} alt="Logo" style={{ maxWidth: 30, padding: 5 }} />
+              BitDummies
+            </Link>
+          </div>
           <div>
             <ul className="navbar-nav">
-              <li
-                className={`nav-item ${
-                  this.state.activeTab === 'home' ? 'active' : ''
-                }`}
-              >
-                <Link
-                  className="nav-link"
-                  to="/"
-                  onClick={() => {
-                    this.setState({ activeTab: 'home' })
-                  }}
-                >
-                  Home
-                </Link>
-              </li>
-              <li
-                className={`nav-item ${
-                  this.state.activeTab === 'products' ? 'active' : ''
-                }`}
-              >
-                <Link
-                  className="nav-link"
-                  to="/products"
-                  onClick={() => {
-                    this.setState({ activeTab: 'products' })
-                  }}
-                >
-                  Products
-                </Link>
-              </li>
-              <li
-                className={`nav-item ${
-                  this.state.activeTab === 'login' ? 'active' : ''
-                }`}
-              >
-                <Link
-                  className="nav-link"
-                  to="/login"
-                  onClick={() => {
-                    this.setState({ activeTab: 'login' })
-                  }}
-                >
-                  Signup/Signin
-                </Link>
-              </li>
-              <li
-                className={`nav-item ${
-                  this.state.activeTab === 'cart' ? 'active' : ''
-                }`}
-              >
-                <Link
-                  className="nav-link"
-                  to="/cart"
-                  onClick={() => {
-                    this.setState({ activeTab: 'cart' })
-                  }}
-                >
-                  Cart ({this.state.cart})
-                </Link>
-              </li>
+              {this.generateListItem('Home', 'home', '/')}
+              {this.generateListItem('Products', 'products', '/products')}
+              {this.generateListItem('Login', 'login', '/login')}
+              {this.generateListItem('Cart', 'cart', '/cart', `(0)`)}
             </ul>
           </div>
         </div>
