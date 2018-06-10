@@ -5,7 +5,7 @@ import axios from 'axios'
 import Navbar from './components/Navbar'
 import HomeScreen from './components/screens/HomeScreen/index'
 import ProductsScreen from './components/screens/ProductsScreen'
-import SignupScreen from './components/screens/SignupScreen'
+import LoginScreen from './components/screens/LoginScreen'
 import Footer from './components/Footer'
 
 import './App.css'
@@ -37,7 +37,7 @@ class App extends Component {
   }
 
   logout = event => {
-    event.preventDefault()
+    // event.preventDefault()
     console.log('Logging out')
     axios.post('/auth/logout').then(response => {
       console.log(response.data)
@@ -60,7 +60,7 @@ class App extends Component {
         />
         <Route exact path="/" component={HomeScreen} />
         <Route path="/products" component={ProductsScreen} />
-        <Route exact path="/login" component={SignupScreen} />
+        <Route exact path="/login" component={LoginScreen} />
         <Footer />
       </div>
     )

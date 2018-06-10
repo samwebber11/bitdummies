@@ -7,26 +7,13 @@ import logo from '../logo.svg'
 class Navbar extends Component {
   state = {
     activeTab: this.props.activeTab,
-    loggedIn: this.props.loggedIn,
   }
 
-  generateListItem = (title, tabName, to, rest, handler) => (
-    <li
-      className={`nav-item ${this.state.activeTab === tabName ? 'active' : ''}`}
-    >
-      <Link
-        className="nav-link"
-        to={to}
-        onClick={handler || (() => this.setState({ activeTab: tabName }))}
-      >
-        {title}
-        {rest}
-      </Link>
-    </li>
-  )
+  changeActiveTab = activeTab => {
+    this.setState({ activeTab })
+  }
 
   render() {
-    console.log(this.props.loggedIn)
     return (
       <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
         <div className="container d-flex justify-content-between align-items-center">
@@ -38,17 +25,78 @@ class Navbar extends Component {
           </div>
           <div>
             <ul className="navbar-nav">
-              {this.generateListItem('Home', 'home', '/')}
-              {this.generateListItem('Products', 'products', '/products')}
-              {this.props.loggedIn
-                ? this.generateListItem(
-                    'Logout',
-                    'logout',
-                    '#',
-                    this.props.logout
-                  )
-                : this.generateListItem('Login', 'login', '/login')}
-              {this.generateListItem('Cart', 'cart', '/cart', `(0)`)}
+              {/* Home */}
+              <li
+                className={`nav-item ${
+                  this.state.activeTab === 'home' ? 'active' : ''
+                }`}
+              >
+                <Link
+                  className="btn nav-link"
+                  to="/"
+                  onClick={() => this.changeActiveTab('home')}
+                >
+                  Home
+                </Link>
+              </li>
+
+              {/* Products */}
+              <li
+                className={`nav-item ${
+                  this.state.activeTab === 'products' ? 'active' : ''
+                }`}
+              >
+                <Link
+                  className="nav-link"
+                  to="/products"
+                  onClick={() => this.changeActiveTab('products')}
+                >
+                  Products
+                </Link>
+              </li>
+
+              {/* Cart */}
+              <li
+                className={`nav-item ${
+                  this.state.activeTab === 'cart' ? 'active' : ''
+                }`}
+              >
+                <Link
+                  className="nav-link"
+                  to="/cart"
+                  onClick={() => this.changeActiveTab('cart')}
+                >
+                  Cart
+                </Link>
+              </li>
+
+              {/* Login and Logout */}
+              {this.props.loggedIn ? (
+                // If user is logged in, display the option for logging out.
+                <li className="nav-item">
+                  <button
+                    className="btn btn-outline-light"
+                    onClick={() => this.props.logout()}
+                  >
+                    Logout
+                  </button>
+                </li>
+              ) : (
+                // Else if user is not logged in, display the option for logging in.
+                <li
+                  className={`nav-item ${
+                    this.state.activeTab === 'login' ? 'active' : ''
+                  }`}
+                >
+                  <Link
+                    className="btn btn-outline-light"
+                    to="/login"
+                    onClick={() => this.changeActiveTab('login')}
+                  >
+                    Login
+                  </Link>
+                </li>
+              )}
             </ul>
           </div>
         </div>
