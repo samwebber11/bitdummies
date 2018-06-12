@@ -3,7 +3,9 @@ import logger from 'morgan'
 import bodyParser from 'body-parser'
 import session from 'express-session'
 
+import router from './routes'
 import authRouter from './routes/auth'
+import productsRouter from './routes/products'
 import passport from './passport'
 import keys from './config/keys'
 import './database'
@@ -28,17 +30,14 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 // Routes.
+app.use('/', router)
 app.use('/auth', authRouter)
-app.get('/', (req, res) => {
-  res.redirect('http://localhost:3000/')
-})
+app.use('/products', productsRouter)
 
 // Error handler.
-app.use((err, req, res, next) => {
-  console.log('====== ERROR =======')
-  console.error(err.stack)
-  res.status(500)
-})
+app.use((err, req, res, next) =>
+  res.status(err.status || 500).send(err.message || 'There was a problem')
+)
 
 app.listen(PORT, () => {
   console.log(`Express App listening on port ${PORT}`)

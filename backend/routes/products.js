@@ -22,17 +22,20 @@ router.get('/:id', (req, res, next) => {
 })
 
 router.get('/', (req, res, next) => {
-  Product.find({ inStock: true }, 'name category price image').exec(
-    (err, productsList) => {
-      if (err) return next(err)
+  const query = Object.assign({}, { inStock: true }, req.query)
+  Product.find(query, 'name category price image').exec((err, productsList) => {
+    if (err) return next(err)
 
-      if (!productsList) {
-        const error = new Error('No products in the database')
-        error.status = 400
-        return next(error)
-      }
-
-      return res.json({ productsList })
+    if (productsList.length === 0) {
+      const error = new Error(
+        'No products in the database match the given query'
+      )
+      error.status = 400
+      return next(error)
     }
-  )
+
+    return res.json({ productsList })
+  })
 })
+
+export default router

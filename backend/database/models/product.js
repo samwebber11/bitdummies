@@ -1,6 +1,6 @@
 import mongoose from 'mongoose'
 
-const { Schema } = mongoose.Schema
+const { Schema } = mongoose
 
 const ProductSchema = new Schema({
   category: {

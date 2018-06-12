@@ -14,7 +14,7 @@ router.get(
 
 // Callback route for Google to redirect to.
 router.get(
-  '/google/redirect',
+  '/google/callback',
   passport.authenticate('google', {
     successRedirect: '/',
     failureRedirect: '/login',

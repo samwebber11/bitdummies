@@ -1,12 +1,12 @@
 import mongoose from 'mongoose'
 
-const { Schema } = mongoose.Schema
+const { Schema } = mongoose
 
 const OrderSchema = new Schema({
   products: [
     {
       productID: {
-        type: Schema.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Product',
         required: true,
       },
@@ -46,7 +46,7 @@ const OrderSchema = new Schema({
     },
   },
   shippingAddress: {
-    type: Schema.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'Address',
     required: true,
   },
