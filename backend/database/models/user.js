@@ -1,15 +1,45 @@
 import mongoose from 'mongoose'
+import { isEmail, isMobilePhone } from 'validator'
 
 const { Schema } = mongoose
 
 const UserSchema = new Schema({
-  // firstName: { type: String, required: true },
-  // lastName: { type: String, required: true },
-  // email: { type: String, required: true, unique: true },
-  // phone: { type: String, required: true },
-  googleID: { type: String, required: true },
-  username: { type: String, required: true },
-  thumbnail: { type: String },
+  provider: {
+    name: {
+      type: String,
+      required: true,
+      enum: ['google', 'facebook', 'self'],
+      default: 'self',
+    },
+    id: {
+      type: String,
+      required: true,
+    },
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    validate: [isEmail, 'Invalid email'],
+  },
+  firstName: {
+    type: String,
+    required: true,
+  },
+  lastName: {
+    type: String,
+    required: true,
+  },
+  phone: {
+    type: String,
+    validate: [isMobilePhone, 'Invalid phone'],
+  },
+  address: [
+    {
+      type: Schema.ObjectId,
+      ref: 'Address',
+    },
+  ],
 })
 
 const User = mongoose.model('User', UserSchema)
