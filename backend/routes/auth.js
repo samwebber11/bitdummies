@@ -21,7 +21,7 @@ router.get(
   })
 )
 
-// this route is just used to get the user basic info
+// This route is just used to get the user basic info.
 router.get('/user', (req, res, next) => {
   console.log('===== user!!======')
   console.log(req.user)
@@ -31,6 +31,7 @@ router.get('/user', (req, res, next) => {
   return res.json({ user: null })
 })
 
+// Route for logging the user out.
 router.post('/logout', (req, res) => {
   if (req.user) {
     req.session.destroy()
