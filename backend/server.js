@@ -5,6 +5,7 @@ import session from 'express-session'
 
 import router from './routes'
 import authRouter from './routes/auth'
+import orderRouter from './routes/order'
 import productsRouter from './routes/products'
 import passport from './passport'
 import keys from './config/keys'
@@ -32,6 +33,7 @@ app.use(passport.session())
 // Routes.
 app.use('/', router)
 app.use('/auth', authRouter)
+app.use('/order', orderRouter)
 app.use('/products', productsRouter)
 
 // Error handler.

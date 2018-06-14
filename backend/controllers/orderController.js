@@ -4,7 +4,7 @@ import Order from '../database/models/order'
 const getOrderInfo = [
   loggedIn,
   (req, res, next) => {
-    if (!req.locals.isLoggedIn) {
+    if (!res.locals.isLoggedIn) {
       const error = new Error('Unauthorized')
       error.status = 401
       return next(error)
@@ -35,7 +35,7 @@ const getOrderInfo = [
 const getOrdersList = [
   loggedIn,
   (req, res, next) => {
-    if (!req.locals.isLoggedIn) {
+    if (!res.locals.isLoggedIn) {
       const error = new Error('Unauthorized')
       error.status = 401
       return next(error)

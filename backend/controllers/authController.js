@@ -24,15 +24,18 @@ const getBasicUserInfo = [
   },
 ]
 
-const logoutUser = (req, res) => {
-  if (req.user) {
-    req.session.destroy()
-    // req.logout()
-    req.clearCookie('connect.sid')
-    return res.json({ msg: 'logging you out' })
-  }
-  return res.json({ msg: 'no user to log out' })
-}
+const logoutUser = [
+  loggedIn,
+  (req, res) => {
+    if (res.locals.isLoggedIn) {
+      req.session.destroy()
+      // req.logout()
+      req.clearCookie('connect.sid')
+      return res.json({ msg: 'logging you out' })
+    }
+    return res.json({ msg: 'no user to log out' })
+  },
+]
 
 const authController = {
   getBasicUserInfo,

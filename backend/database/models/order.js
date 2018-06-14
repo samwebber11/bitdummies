@@ -3,7 +3,7 @@ import mongoose from 'mongoose'
 const { Schema } = mongoose
 
 const OrderSchema = new Schema({
-  products: [
+  product: [
     {
       productID: {
         type: Schema.Types.ObjectId,
@@ -49,6 +49,11 @@ const OrderSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Address',
     required: true,
+  },
+  orderedAt: {
+    type: Date,
+    required: true,
+    default: Date.now,
   },
 })
 

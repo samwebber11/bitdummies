@@ -8,4 +8,5 @@ export const loggedIn = (req, res, next) => {
   next()
 }
 
-export const notblah = 'true'
+// Performs the same operation as object spread.
+export const merge = (prev, next) => Object.assign({}, prev, next)
