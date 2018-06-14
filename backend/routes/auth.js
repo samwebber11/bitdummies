@@ -1,45 +1,19 @@
 import express from 'express'
 
-import passport from '../passport'
+import authController from '../controllers/authController'
 
 const router = express.Router()
 
 // Authenticate with Google.
-router.get(
-  '/google',
-  passport.authenticate('google', {
-    scope: ['profile'],
-  })
-)
+router.get('/google', authController.authenticateGoogle)
 
 // Callback route for Google to redirect to.
-router.get(
-  '/google/callback',
-  passport.authenticate('google', {
-    successRedirect: '/',
-    failureRedirect: '/login',
-  })
-)
+router.get('/google/callback', authController.authenticateGoogleCallback)
 
 // This route is just used to get the user basic info.
-router.get('/user', (req, res, next) => {
-  console.log('===== user!!======')
-  console.log(req.user)
-  if (req.user) {
-    return res.json({ user: req.user })
-  }
-  return res.json({ user: null })
-})
+router.get('/user', authController.getBasicUserInfo)
 
 // Route for logging the user out.
-router.post('/logout', (req, res) => {
-  if (req.user) {
-    req.session.destroy()
-    // req.logout()
-    res.clearCookie('connect.sid')
-    return res.json({ msg: 'logging you out' })
-  }
-  return res.json({ msg: 'no user to log out' })
-})
+router.post('/logout', authController.logoutUser)
 
 export default router
