@@ -41,9 +41,6 @@ const getOrdersList = [
       return next(error)
     }
 
-    console.log('==== req.params ====')
-    console.log(req.params)
-    console.log('==== end ====')
     console.log('==== req.query ====')
     console.log(req.query)
     console.log('==== end ====')
