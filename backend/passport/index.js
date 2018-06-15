@@ -5,15 +5,14 @@ import User from '../database/models/user'
 
 passport.serializeUser((user, done) => {
   console.log('*** serializeUser called ***')
-  console.log(user)
+  // console.log(user)
   console.log('---------------')
   done(null, { _id: user._id })
 })
 
 passport.deserializeUser((id, done) => {
   console.log('*** deserializeUser called ***')
-  console.log(id)
-  User.findOne({ _id: id }, 'username')
+  User.findOne({ _id: id }, 'firstName lastName')
     .then(user => {
       console.log('======= USER FOUND =======')
       console.log(user)

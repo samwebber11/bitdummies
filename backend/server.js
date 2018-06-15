@@ -7,6 +7,7 @@ import router from './routes'
 import authRouter from './routes/auth'
 import orderRouter from './routes/order'
 import productsRouter from './routes/products'
+import userRouter from './routes/user'
 import passport from './passport'
 import keys from './config/keys'
 import './database'
@@ -35,6 +36,7 @@ app.use('/', router)
 app.use('/auth', authRouter)
 app.use('/order', orderRouter)
 app.use('/products', productsRouter)
+app.use('/user', userRouter)
 
 // Error handler.
 app.use((err, req, res, next) =>

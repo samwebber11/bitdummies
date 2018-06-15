@@ -1,18 +1,4 @@
 import { loggedIn } from './utils'
-import passport from '../passport'
-
-const authenticateGoogle = () => {
-  passport.authenticate('google', {
-    scope: ['profile'],
-  })
-}
-
-const authenticateGoogleCallback = () => {
-  passport.authenticate('google', {
-    successRedirect: '/',
-    failureRedirect: '/login',
-  })
-}
 
 const getBasicUserInfo = [
   loggedIn,
@@ -30,7 +16,7 @@ const logoutUser = [
     if (res.locals.isLoggedIn) {
       req.session.destroy()
       // req.logout()
-      req.clearCookie('connect.sid')
+      res.clearCookie('connect.sid')
       return res.json({ msg: 'logging you out' })
     }
     return res.json({ msg: 'no user to log out' })
@@ -39,8 +25,6 @@ const logoutUser = [
 
 const authController = {
   getBasicUserInfo,
-  authenticateGoogle,
-  authenticateGoogleCallback,
   logoutUser,
 }
 
