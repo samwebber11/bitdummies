@@ -8,4 +8,6 @@ router.get('/:id', userController.getUserAccountInfo)
 
 router.get('/', userController.getUserListAccountInfo)
 
+router.post('/updateInfo', userController.updateUserInfo)
+
 export default router
