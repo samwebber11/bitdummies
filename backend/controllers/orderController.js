@@ -15,7 +15,6 @@ const getOrderInfo = [
     console.log('==== end ====')
 
     Order.findById(req.params.id)
-      .sort([['orderedAt', 'descending']])
       .populate('product.productID')
       .populate('shippingAddress')
       .exec((err, order) => {
