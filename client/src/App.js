@@ -8,7 +8,7 @@ import ProductsScreen from './components/screens/ProductsScreen'
 import LoginScreen from './components/screens/LoginScreen'
 import Footer from './components/Footer'
 
-import './App.css'
+import './static/styles/App.css'
 
 class App extends Component {
   state = {
