@@ -1,8 +1,12 @@
 import { body, validationResult } from 'express-validator/check'
 import { sanitizeBody } from 'express-validator/filter'
+import async from 'async'
 
 import { merge, loggedIn } from './utils'
 import User from '../database/models/user'
+import Product from '../database/models/product'
+import Address from '../database/models/address'
+import Order from '../database/models/order'
 
 const getUserAccountInfo = [
   loggedIn,
@@ -180,10 +184,104 @@ const updateUserInfo = [
   },
 ]
 
+const createNewOrder = [
+  loggedIn,
+  (req, res, next) => {
+    if (!res.locals.isLoggedIn || req.user._id !== req.params.id) {
+      const error = new Error('Unauthorized')
+      error.status = 401
+      return next(error)
+    }
+
+    const { products, address, payment } = req.body
+    const productIDs = products.map(product => product._id)
+
+    async.waterfall(
+      [
+        outerCallback => {
+          async.parallel(
+            {
+              productsList: callback => {
+                Product.find({ _id: { $in: productIDs } }).exec(callback)
+              },
+              deliveryAddress: callback => {
+                Address.findById(address._id).exec(callback)
+              },
+            },
+            (err, results) => {
+              if (err) return next(err)
+
+              const { productsList, deliveryAddress } = results
+              if (productsList.length !== productIDs.length) {
+                const error = new Error(
+                  'Some products not found in the database.'
+                )
+                error.status = 404
+                return next(error)
+              }
+
+              const productsToBeStored = []
+              products.forEach(orderedProduct => {
+                const product = productsList.find(
+                  p => p._id === orderedProduct._id
+                )
+                if (product.quantity < orderedProduct.quantity) {
+                  const error = new Error(
+                    'One or more items in your order are less in stock.'
+                  )
+                  error.status = 400
+                  return next(error)
+                }
+
+                const productToBeStored = {
+                  productID: product._id,
+                  quantity: orderedProduct.quantity,
+                  price: product.price,
+                }
+                productsToBeStored.push(productToBeStored)
+              })
+
+              // TODO: Make sure the payment is complete.
+              const order = new Order({
+                product: productsToBeStored,
+                status: 'Processing',
+                payment: {
+                  status: payment.status,
+                  mode: payment.mode,
+                  transactionID: payment.transactionID,
+                },
+                shippingAddress: deliveryAddress,
+              })
+
+              outerCallback(null, order)
+            }
+          )
+        },
+      ],
+      (err, result) => {
+        if (err) return next(err)
+
+        result.order.save().then((error, savedOrder) => {
+          if (error) return next(error)
+
+          res.json({ msg: 'Success' })
+        })
+      }
+    )
+  },
+]
+
+const getOrderDetails = () => true
+
+const updateOrderDetails = () => true
+
 const userController = {
   getUserAccountInfo,
   getUserListAccountInfo,
   updateUserInfo,
+  createNewOrder,
+  getOrderDetails,
+  updateOrderDetails,
 }
 
 export default userController

@@ -17,6 +17,7 @@
     "prettier": "^1.13.4"
   },
   "dependencies": {
+    "async": "^2.6.1",
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "body-parser": "^1.18.3",

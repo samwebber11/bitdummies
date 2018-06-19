@@ -40,6 +40,12 @@ const UserSchema = new Schema({
       ref: 'Address',
     },
   ],
+  order: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Order',
+    },
+  ],
 })
 
 UserSchema.virtual('name').get(() => `${this.firstName} ${this.lastName}`)

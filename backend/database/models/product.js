@@ -13,8 +13,8 @@ const ProductSchema = new Schema({
     type: Number,
     required: true,
   },
-  inStock: {
-    type: Boolean,
+  quantityAvailable: {
+    type: Number,
     required: true,
   },
   image: [
