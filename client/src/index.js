@@ -11,6 +11,7 @@ import {
 } from 'connected-react-router'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
+import 'react-bootstrap-carousel/dist/react-bootstrap-carousel.css'
 
 import App from './App'
 import rootReducer from './reducers'
