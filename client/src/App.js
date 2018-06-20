@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Route } from 'react-router-dom'
+import { Route, Switch } from 'react-router-dom'
 import axios from 'axios'
 
 import Navbar from './components/Navbar'
@@ -12,9 +12,7 @@ import './static/styles/App.css'
 
 class App extends Component {
   state = {
-    activeTab: 'home',
     loggedIn: false,
-    user: null,
   }
 
   componentDidMount = () => {
@@ -24,13 +22,11 @@ class App extends Component {
         console.log('THERE IS A USER')
         this.setState({
           loggedIn: true,
-          user: response.data.user,
         })
         console.log(this.state.loggedIn)
       } else {
         this.setState({
           loggedIn: false,
-          user: null,
         })
       }
     })
@@ -44,7 +40,6 @@ class App extends Component {
       if (response.status === 200) {
         this.setState({
           loggedIn: false,
-          user: null,
         })
       }
     })
@@ -53,14 +48,12 @@ class App extends Component {
   render() {
     return (
       <div>
-        <Navbar
-          activeTab={this.state.activeTab}
-          loggedIn={this.state.loggedIn}
-          logout={this.logout}
-        />
-        <Route exact path="/" component={HomeScreen} />
-        <Route path="/products" component={ProductsScreen} />
-        <Route exact path="/login" component={LoginScreen} />
+        <Navbar loggedIn={this.state.loggedIn} logout={this.logout} />
+        <Switch>
+          <Route exact path="/" component={HomeScreen} />
+          <Route path="/products" component={ProductsScreen} />
+          <Route exact path="/login" component={LoginScreen} />
+        </Switch>
         <Footer />
       </div>
     )

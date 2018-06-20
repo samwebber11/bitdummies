@@ -1,18 +1,10 @@
 import React, { Component } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import propTypes from 'prop-types'
 
 import logo from '../logo.svg'
 
 class Navbar extends Component {
-  state = {
-    activeTab: this.props.activeTab,
-  }
-
-  changeActiveTab = activeTab => {
-    this.setState({ activeTab })
-  }
-
   render() {
     return (
       <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -23,81 +15,41 @@ class Navbar extends Component {
               BitDummies
             </Link>
           </div>
-          <div>
-            <ul className="navbar-nav">
-              {/* Home */}
-              <li
-                className={`nav-item ${
-                  this.state.activeTab === 'home' ? 'active' : ''
-                }`}
-              >
-                <Link
-                  className="btn nav-link"
-                  to="/"
-                  onClick={() => this.changeActiveTab('home')}
-                >
+          <div className="d-flex justify-content-between align-items-center">
+            <ul className="navbar-nav px-2">
+              <li className="nav-item">
+                <NavLink exact className="nav-link" to="/">
                   Home
-                </Link>
+                </NavLink>
               </li>
 
-              {/* Products */}
-              <li
-                className={`nav-item ${
-                  this.state.activeTab === 'products' ? 'active' : ''
-                }`}
-              >
-                <Link
-                  className="nav-link"
-                  to="/products"
-                  onClick={() => this.changeActiveTab('products')}
-                >
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/products">
                   Products
-                </Link>
+                </NavLink>
               </li>
 
-              {/* Cart */}
-              <li
-                className={`nav-item ${
-                  this.state.activeTab === 'cart' ? 'active' : ''
-                }`}
-              >
-                <Link
-                  className="nav-link"
-                  to="/cart"
-                  onClick={() => this.changeActiveTab('cart')}
-                >
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/cart">
                   Cart
-                </Link>
+                </NavLink>
               </li>
-
-              {/* Login and Logout */}
-              {this.props.loggedIn ? (
-                // If user is logged in, display the option for logging out.
-                <li className="nav-item">
-                  <button
-                    className="btn btn-outline-light"
-                    onClick={() => this.props.logout()}
-                  >
-                    Logout
-                  </button>
-                </li>
-              ) : (
-                // Else if user is not logged in, display the option for logging in.
-                <li
-                  className={`nav-item ${
-                    this.state.activeTab === 'login' ? 'active' : ''
-                  }`}
-                >
-                  <Link
-                    className="btn btn-outline-light"
-                    to="/login"
-                    onClick={() => this.changeActiveTab('login')}
-                  >
-                    Login
-                  </Link>
-                </li>
-              )}
             </ul>
+            {/* Login and Logout */}
+            {this.props.loggedIn ? (
+              // If user is logged in, display the option for logging out.
+              <button
+                className="btn btn-outline-light"
+                onClick={() => this.props.logout()}
+              >
+                Logout
+              </button>
+            ) : (
+              // Else if user is not logged in, display the option for logging in.
+              <NavLink className="btn btn-outline-light" to="/login">
+                Login
+              </NavLink>
+            )}
           </div>
         </div>
       </nav>
@@ -106,7 +58,6 @@ class Navbar extends Component {
 }
 
 Navbar.propTypes = {
-  activeTab: propTypes.string.isRequired,
   loggedIn: propTypes.bool.isRequired,
   logout: propTypes.func.isRequired,
 }

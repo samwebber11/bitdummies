@@ -1,6 +1,6 @@
 import React from 'react'
 
-const SignupScreen = ({ isLoggedIn }) => (
+const LoginScreen = () => (
   <div className="d-flex justify-content-center align-items-center m-5">
     <div className="card">
       <div className="card-header">
@@ -18,11 +18,10 @@ const SignupScreen = ({ isLoggedIn }) => (
         </a>
       </div>
       <div className="card-footer text-muted small">
-        By logging in, you agree to BitDummies' Privacy Policy and Terms of
-        Service.
+        By logging in, you agree to our Privacy Policy and Terms of Service.
       </div>
     </div>
   </div>
 )
 
-export default SignupScreen
+export default LoginScreen
