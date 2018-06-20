@@ -6,7 +6,7 @@ class ProductCard extends Component {
     product: null,
   }
 
-  componentDidMount = props => {
+  componentDidMount = () => {
     // TODO: Fetch data about the product from the API server.
     const { data } = this.props.uri
     this.setState({ product: data })

@@ -5,6 +5,7 @@ import axios from 'axios'
 import Navbar from './components/Navbar'
 import HomeScreen from './components/screens/HomeScreen/index'
 import ProductsScreen from './components/screens/ProductsScreen'
+import ProductDetailsScreen from './components/screens/ProductDetailsScreen/'
 import LoginScreen from './components/screens/LoginScreen'
 import Footer from './components/Footer'
 
@@ -50,7 +51,8 @@ class App extends Component {
         <Navbar loggedIn={this.state.loggedIn} logout={this.logout} />
         <Switch>
           <Route exact path="/" component={HomeScreen} />
-          <Route path="/products" component={ProductsScreen} />
+          <Route exact path="/products" component={ProductsScreen} />
+          <Route path="/products/:id" component={ProductDetailsScreen} />
           <Route exact path="/login" component={LoginScreen} />
         </Switch>
         <Footer />
