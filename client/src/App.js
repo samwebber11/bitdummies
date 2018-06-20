@@ -32,8 +32,7 @@ class App extends Component {
     })
   }
 
-  logout = event => {
-    // event.preventDefault()
+  logout = () => {
     console.log('Logging out')
     axios.post('/auth/logout').then(response => {
       console.log(response.data)
