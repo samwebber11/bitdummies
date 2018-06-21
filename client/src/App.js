@@ -6,6 +6,7 @@ import Navbar from './components/Navbar'
 import HomeScreen from './components/screens/HomeScreen/index'
 import ProductsScreen from './components/screens/ProductsScreen'
 import ProductDetailsScreen from './components/screens/ProductDetailsScreen/'
+import CartScreen from './containers/CartScreen'
 import LoginScreen from './components/screens/LoginScreen'
 import Footer from './components/Footer'
 
@@ -53,6 +54,7 @@ class App extends Component {
           <Route exact path="/" component={HomeScreen} />
           <Route exact path="/products" component={ProductsScreen} />
           <Route path="/products/:id" component={ProductDetailsScreen} />
+          <Route exact path="/cart" component={CartScreen} />
           <Route exact path="/login" component={LoginScreen} />
         </Switch>
         <Footer />
