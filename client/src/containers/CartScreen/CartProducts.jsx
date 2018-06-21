@@ -29,17 +29,24 @@ const generateCartProductCards = ({ productImageUris }) =>
   ))
 
 const productImageUris = [
-  'https://source.unsplash.com/random/800x498',
-  'https://source.unsplash.com/random/800x499',
-  'https://source.unsplash.com/random/800x500',
-  'https://source.unsplash.com/random/800x501',
-  'https://source.unsplash.com/random/800x502',
+  'https://source.unsplash.com/random/500x498',
+  'https://source.unsplash.com/random/500x499',
+  'https://source.unsplash.com/random/500x500',
+  'https://source.unsplash.com/random/500x501',
+  'https://source.unsplash.com/random/500x502',
 ]
 
 const products = {
   productImageUris,
 }
 
-const CartProducts = () => generateCartProductCards(products)
-
+const CartProducts = () => (
+  <div>
+    <div className="d-flex justify-content-between">
+      <h6>My Shopping Cart</h6>
+      <p>Total: $49.99</p>
+    </div>
+    {generateCartProductCards(products)}
+  </div>
+)
 export default CartProducts
