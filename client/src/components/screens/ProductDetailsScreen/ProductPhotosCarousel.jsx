@@ -39,7 +39,9 @@ const ProductPhotosCarousel = props => (
     animation
     autoplay={props.autoplay}
     slideshowSpeed={7000}
-    ref={r => (this.slider = r)}
+    ref={r => {
+      this.slider = r
+    }}
     version={4}
   >
     {generatePhotos(product)}
