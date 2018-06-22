@@ -16,7 +16,9 @@ const generateCartProductCards = ({ productImageUris }) =>
                   Some quick example text to build on the card title and make up
                   the bulk of the content.
                 </p>
-                <button className="btn btn-danger">Remove from cart</button>
+                <button className="btn btn-outline-danger">
+                  Remove from cart
+                </button>
               </div>
               <div className="col-md-4">
                 <p className="card-text text-right">$49.99</p>
