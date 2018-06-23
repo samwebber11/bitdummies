@@ -4,7 +4,7 @@ import axios from 'axios'
 
 import Navbar from './components/Navbar'
 import HomeScreen from './components/screens/HomeScreen/index'
-import ProductsScreen from './components/screens/ProductsScreen'
+import ProductsScreen from './components/screens/ProductsScreen/'
 import ProductDetailsScreen from './components/screens/ProductDetailsScreen/'
 import CartScreen from './containers/CartScreen'
 import LoginScreen from './components/screens/LoginScreen'
