@@ -18,6 +18,11 @@ $ cd bitdummies
 $ npm install
   or
   yarn add
+$ cd client
+$ npm install
+  or
+  yarn add
+$ cd ../
 $ npm start:dev
   or
   yarn start:dev
