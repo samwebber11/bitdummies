@@ -1,7 +1,6 @@
 import React from 'react'
-import propTypes from 'prop-types'
 
-import ProductCard from './ProductCard'
+import ProductCardGroup from './ProductCardGroup'
 
 // Hard coded products list.
 const productsList = [
@@ -46,33 +45,11 @@ const productsList = [
   },
 ]
 
-const generateProductGroup = ({ category, items }) => {
-  const products = items.slice(0, 3)
-
-  return (
-    <div className="my-4">
-      <h3>{category}</h3>
-      <div className="card-deck">
-        {products.map(product => ProductCard(product))}
-      </div>
-    </div>
-  )
-}
-
-generateProductGroup.propTypes = {
-  category: propTypes.string.isRequired,
-  items: propTypes.shape({
-    id: propTypes.number.isRequired,
-    uri: propTypes.string.isRequired,
-    name: propTypes.string.isRequired,
-    price: propTypes.number.isRequired,
-    discount: propTypes.number.isReqired,
-  }).isRequired,
-}
-
 const ProductsScreen = () => (
   <div className="container">
-    {productsList.map(category => generateProductGroup(category))}
+    {productsList.map(products => (
+      <ProductCardGroup key={products.category} products={products} />
+    ))}
   </div>
 )
 
