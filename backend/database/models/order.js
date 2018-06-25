@@ -15,11 +15,6 @@ const OrderSchema = new Schema({
         required: true,
         min: 1,
       },
-      price: {
-        type: Number,
-        required: true,
-        min: 0,
-      },
       actualPrice:{
         type:Number,
         required:true,
@@ -36,6 +31,11 @@ const OrderSchema = new Schema({
          max:50,
          min:0,
          required:true
+      },
+      discountPrice:{
+        type:Number,
+        min:0,
+        required:true
       },
       size:
       {
@@ -81,9 +81,11 @@ const OrderSchema = new Schema({
 })
 
 // Order Function to get the discount Price
-OrderSchema.virtual('discountedPrice').get(function()
-{ 
-  return this.product.actualPrice-(this.product.actualPrice*this.product.discount)/100
+OrderSchema.pre('save',function(next){
+  var product=this
+  this.product.discountPrice=(this.product.actualPrice-(this.product.actualPrice*this.product.discount)/100)
+  next()
 })
+
 const Order = mongoose.model('Order', OrderSchema)
 export default Order

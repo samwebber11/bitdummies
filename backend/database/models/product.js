@@ -22,10 +22,6 @@ const ProductSchema = new Schema({
     maxlength:200,
     default:'A very little short description of the searched product is available.'
   },
-  price: {
-    type: Number,
-    required: true,
-  },
   actualPrice:
   {
     type:Number,
@@ -69,7 +65,7 @@ const ProductSchema = new Schema({
   },
 })
 
-ProductSchema.virtual('discountPrice').get(function(){
+ProductSchema.virtual('discountedPrice').get(function(){
 return (this.actualPrice)-(this.actualPrice*this.discount)/100
 }) 
 
