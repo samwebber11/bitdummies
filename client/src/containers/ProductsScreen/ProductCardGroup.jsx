@@ -3,9 +3,9 @@ import propTypes from 'prop-types'
 
 import ProductCard from './ProductCard'
 
-const ProductCardGroup = props => {
-  const { category } = props.products
-  const products = props.products.items.slice(0, 3)
+const ProductCardGroup = ({ productGroup }) => {
+  const { category } = productGroup
+  const products = productGroup.products.slice(0, 3)
 
   return (
     <div className="my-4">
@@ -20,15 +20,16 @@ const ProductCardGroup = props => {
 }
 
 ProductCardGroup.propTypes = {
-  products: propTypes.shape({
+  productGroup: propTypes.shape({
     category: propTypes.string.isRequired,
-    items: propTypes.arrayOf(
+    products: propTypes.arrayOf(
       propTypes.shape({
         id: propTypes.number.isRequired,
-        uri: propTypes.string.isRequired,
         name: propTypes.string.isRequired,
-        price: propTypes.number.isRequired,
-        discount: propTypes.number.isReqired,
+        actualPrice: propTypes.number.isRequired,
+        discount: propTypes.number,
+        image: propTypes.string.isRequired,
+        discountedPrice: propTypes.number.isRequired,
       })
     ).isRequired,
   }).isRequired,
