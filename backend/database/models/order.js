@@ -1,5 +1,4 @@
 import mongoose from 'mongoose'
-import validator from 'validator'
 
 const { Schema } = mongoose
 
@@ -26,24 +25,24 @@ const OrderSchema = new Schema({
         required:true,
         min:0,
       },
-      discountPrice:{
-        type:Number,
-        required:true,
-        min:0
-      },
       tax:{
         type:Number,
         required:true,
-        enum:[5,10,12.5,18,30],
-        default:0
+        enum:[5,10,12.5,18,28],
+        default:5
       },
       discount:{
          type:Number,
          max:50,
-         min:1,
+         min:0,
          required:true
+      },
+      size:
+      {
+        type:String,
+        required:true,
+        enum:['XS','S','M','L','XL','Onesize']
       }
-
     },
   ],
   status: {
@@ -81,5 +80,9 @@ const OrderSchema = new Schema({
   },
 })
 
+OrderSchema.product.virtual('discountedPrice').get(function()
+{ 
+  return this.product.actualPrice-(this.product.actualPrice*this.product.discount)/100
+})
 const Order = mongoose.model('Order', OrderSchema)
 export default Order
