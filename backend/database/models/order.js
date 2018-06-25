@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import validator from 'validator'
 
 const { Schema } = mongoose
 
@@ -20,6 +21,29 @@ const OrderSchema = new Schema({
         required: true,
         min: 0,
       },
+      actualPrice:{
+        type:Number,
+        required:true,
+        min:0,
+      },
+      discountPrice:{
+        type:Number,
+        required:true,
+        min:0
+      },
+      tax:{
+        type:Number,
+        required:true,
+        enum:[5,10,12.5,18,30],
+        default:0
+      },
+      discount:{
+         type:Number,
+         max:50,
+         min:1,
+         required:true
+      }
+
     },
   ],
   status: {

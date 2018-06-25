@@ -24,10 +24,14 @@ const UserSchema = new Schema({
   },
   firstName: {
     type: String,
+    maxlength:12,
+    minlength:2,
     required: true,
   },
   lastName: {
     type: String,
+    maxlength:10,
+    minlength:2,
     required: true,
   },
   phone: {
