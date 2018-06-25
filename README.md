@@ -17,13 +17,13 @@ $ git clone https://github.com/BitDummies/bitdummies.git
 $ cd bitdummies
 $ npm install
   or
-  yarn add
+  yarn install
 $ cd client
 $ npm install
   or
-  yarn add
+  yarn install
 $ cd ../
-$ npm start:dev
+$ npm run start:dev
   or
   yarn start:dev
 ```
