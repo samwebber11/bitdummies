@@ -1,65 +1,41 @@
 import React from 'react'
+import propTypes from 'prop-types'
 
-const calculateBill = products => {
-  const finalBill = products.reduce(
-    (bill, product) => {
-      bill.cartTotal += product.cost
-      bill.totalDiscount += product.discount
-      bill.totalTax += product.tax
-
-      return bill
-    },
-    {
-      cartTotal: 0,
-      totalDiscount: 0,
-      totalTax: 0,
-    }
-  )
-
-  const { cartTotal, totalDiscount, totalTax } = finalBill
-  return {
-    cartTotal,
-    totalDiscount,
-    totalTax,
-    orderTotal: cartTotal - totalDiscount + totalTax,
-  }
-}
-
-const products = [
-  { cost: 324, discount: 21, tax: 43 },
-  { cost: 473, discount: 23, tax: 67 },
-  { cost: 583, discount: 53, tax: 81 },
-  { cost: 532, discount: 43, tax: 75 },
-]
-
-const CartBill = () => {
-  const { cartTotal, totalDiscount, totalTax, orderTotal } = calculateBill(
-    products
-  )
+const CartBill = ({ bill }) => {
+  const { actualPriceTotal, discountTotal, taxTotal, orderTotal } = bill
 
   return (
     <div className="card">
       <div className="card-body">
         <div className="d-flex justify-content-between">
           <h6>Cart Total</h6>
-          <p>{cartTotal}</p>
+          <p>${actualPriceTotal.toFixed(2)}</p>
         </div>
         <div className="d-flex justify-content-between">
           <h6>Cart Discount</h6>
-          <p className="text-success">-{totalDiscount}</p>
+          <p className="text-success">-${discountTotal.toFixed(2)}</p>
         </div>
         <div className="d-flex justify-content-between">
           <h6>Estimated Tax</h6>
-          <p>{totalTax}</p>
+          <p>${taxTotal.toFixed(2)}</p>
         </div>
         <div className="d-flex justify-content-between">
           <h6>Order total</h6>
-          <p>{orderTotal}</p>
+          <p>${orderTotal.toFixed(2)}</p>
         </div>
       </div>
       <button className="btn btn-success">Place order</button>
     </div>
   )
+}
+
+CartBill.propTypes = {
+  bill: propTypes.shape({
+    actualPriceTotal: propTypes.number.isRequired,
+    discountTotal: propTypes.number.isRequired,
+    taxTotal: propTypes.number.isRequired,
+    orderTotal: propTypes.number.isRequired,
+  }).isRequired,
 }
 
 export default CartBill

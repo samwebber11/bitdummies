@@ -24,7 +24,7 @@ ProductCardGroup.propTypes = {
     category: propTypes.string.isRequired,
     items: propTypes.arrayOf(
       propTypes.shape({
-        id: propTypes.string.isRequired,
+        id: propTypes.number.isRequired,
         uri: propTypes.string.isRequired,
         name: propTypes.string.isRequired,
         price: propTypes.number.isRequired,
