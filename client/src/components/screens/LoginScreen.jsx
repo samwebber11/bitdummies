@@ -12,7 +12,7 @@ const LoginScreen = () => (
         </button>
         <a
           className="btn btn-lg btn-danger col-md-12 m-2"
-          href="http://localhost:3001/auth/google"
+          href="https://localhost:3001/auth/google"
         >
           Continue with Google
         </a>

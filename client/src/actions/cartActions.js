@@ -1,13 +1,11 @@
 import { CART_ITEM_ADDED, CART_ITEM_REMOVED } from './constants'
 
-const cartItemAdded = item => ({
+export const addItemToCart = item => ({
   type: CART_ITEM_ADDED,
-  item,
+  payload: item,
 })
 
-const cartItemRemoved = ({ id }) => ({
+export const removeItemFromCart = id => ({
   type: CART_ITEM_REMOVED,
-  id,
+  payload: id,
 })
-
-export default { cartItemAdded, cartItemRemoved }
