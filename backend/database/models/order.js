@@ -80,7 +80,8 @@ const OrderSchema = new Schema({
   },
 })
 
-OrderSchema.product.virtual('discountedPrice').get(function()
+// Order Function to get the discount Price
+OrderSchema.virtual('discountedPrice').get(function()
 { 
   return this.product.actualPrice-(this.product.actualPrice*this.product.discount)/100
 })
