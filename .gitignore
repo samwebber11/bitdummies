@@ -8,6 +8,8 @@ coverage/
 build/
 
 # config
+privatekey.pem
+certificate.pem
 keys.js
 initialEntries.txt
 
