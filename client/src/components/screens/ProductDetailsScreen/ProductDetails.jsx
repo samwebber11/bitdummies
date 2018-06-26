@@ -1,9 +1,10 @@
 import React from 'react'
 
-const ProductDetails = () => (
+const ProductDetails = ({ product }) => (
   <div>
     <h3>Product Name</h3>
     <p>$49.99</p>
+    {console.log(product)}
     <hr />
     <h6>Select Size</h6>
     <div className="col-md-2 d-flex justify-content-between">

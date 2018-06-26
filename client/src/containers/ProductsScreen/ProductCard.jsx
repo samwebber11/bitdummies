@@ -9,13 +9,13 @@ const ProductCard = props => {
     actualPrice,
     discount,
     discountedPrice,
-    image,
+    imagePath,
   } = props.product
 
   return (
     <Link style={{ all: 'initial' }} to={`/products/${id}`}>
       <div className="card" style={{ maxWidth: '20rem' }}>
-        <img className="card-img-top" src={image} alt="Product card" />
+        <img className="card-img-top" src={imagePath} alt="Product card" />
         <div className="card-body">
           <div className="d-flex justify-content-between">
             <h5 className="card-title">{name}</h5>
@@ -31,7 +31,9 @@ const ProductCard = props => {
           </p>
           <p>${discountedPrice}</p>
         </div>
-        <button className="btn btn-success">Add to cart</button>
+        <button className="btn btn-success" onClick={props.handleClick}>
+          Add to cart
+        </button>
       </div>
     </Link>
   )
@@ -44,8 +46,9 @@ ProductCard.propTypes = {
     actualPrice: propTypes.number.isRequired,
     discount: propTypes.number,
     discountedPrice: propTypes.number.isRequired,
-    image: propTypes.string.isRequired,
+    imagePath: propTypes.string.isRequired,
   }).isRequired,
+  handleClick: propTypes.func.isRequired,
 }
 
 export default ProductCard
