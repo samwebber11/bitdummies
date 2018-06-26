@@ -15,10 +15,32 @@ const OrderSchema = new Schema({
         required: true,
         min: 1,
       },
-      price: {
+      actualPrice: {
         type: Number,
         required: true,
         min: 0,
+      },
+      tax: {
+        type: Number,
+        required: true,
+        enum: [5, 10, 12.5, 18, 28],
+        default: 5,
+      },
+      discount: {
+        type: Number,
+        max: 50,
+        min: 0,
+        required: true,
+      },
+      discountPrice: {
+        type: Number,
+        min: 0,
+        required: true,
+      },
+      size: {
+        type: String,
+        required: true,
+        enum: ['XS', 'S', 'M', 'L', 'XL', 'Onesize'],
       },
     },
   ],
@@ -55,6 +77,17 @@ const OrderSchema = new Schema({
     required: true,
     default: Date.now,
   },
+})
+
+// Order Function to get the discount Price
+OrderSchema.pre('save', function(next) {
+  const pro = this
+  for (let i = 0; i < product.length; i++) {
+    pro.product[i].discountPrice =
+      pro.product[i].actualPrice -
+      (pro.product[i].actualPrice * pro.product[i].discount) / 100
+  }
+  next()
 })
 
 const Order = mongoose.model('Order', OrderSchema)
