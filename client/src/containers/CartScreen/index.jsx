@@ -8,6 +8,9 @@ import CartBill from './CartBill'
 import calculateBill from './calculateBill'
 import { removeItemFromCart } from '../../actions/cartActions'
 
+import client from '../../apollo-client/client'
+import fetchSomething from '../../queries/'
+
 class CartScreen extends Component {
   state = {
     bill: {
@@ -20,6 +23,12 @@ class CartScreen extends Component {
 
   componentDidMount() {
     this.updateBill(this.props.cart)
+
+    client
+      .query({
+        query: fetchSomething,
+      })
+      .then(response => console.log(response.data))
   }
 
   componentWillReceiveProps(nextProps) {

@@ -1,6 +1,7 @@
 import React from 'react'
 
 import ProductCardGroup from './ProductCardGroup'
+import ProductFilter from './ProductFilter'
 
 // Hard coded products list.
 const productGroupsList = [
@@ -53,13 +54,20 @@ const productGroupsList = [
 ]
 
 const ProductsScreen = () => (
-  <div className="container">
-    {productGroupsList.map(productGroup => (
-      <ProductCardGroup
-        key={productGroup.category}
-        productGroup={productGroup}
-      />
-    ))}
+  <div className="container py-4">
+    <div className="row">
+      <div className="col-md-3">
+        <ProductFilter />
+      </div>
+      <div className="col-md-9">
+        {productGroupsList.map(productGroup => (
+          <ProductCardGroup
+            key={productGroup.category}
+            productGroup={productGroup}
+          />
+        ))}
+      </div>
+    </div>
   </div>
 )
 
