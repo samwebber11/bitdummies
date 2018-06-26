@@ -6,9 +6,12 @@
   "author": "Mohit Sakhuja",
   "license": "MIT",
   "dependencies": {
+    "apollo-boost": "^0.1.10",
     "axios": "^0.18.0",
     "bootstrap": "^4.1.1",
     "connected-react-router": "^4.3.0",
+    "graphql": "^0.13.2",
+    "graphql-tag": "^2.9.2",
     "history": "^4.7.2",
     "jquery": "^3.3.1",
     "popper.js": "^1.14.3",
