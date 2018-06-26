@@ -1,14 +1,37 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import propTypes from 'prop-types'
+import { bindActionCreators } from 'redux'
 
 import CartProductCard from './CartProductCard'
 import CartBill from './CartBill'
 import calculateBill from './calculateBill'
+import { removeItemFromCart } from '../../actions/cartActions'
 
 class CartScreen extends Component {
   state = {
-    bill: calculateBill(this.props.cart),
+    bill: {
+      actualPriceTotal: 0,
+      discountTotal: 0,
+      taxTotal: 0,
+      orderTotal: 0,
+    },
+  }
+
+  componentDidMount() {
+    this.updateBill(this.props.cart)
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.updateBill(nextProps.cart)
+  }
+
+  removeProduct = id => {
+    this.props.removeItemFromCart(id)
+  }
+
+  updateBill = cart => {
+    this.setState({ bill: calculateBill(cart) })
   }
 
   render() {
@@ -22,7 +45,11 @@ class CartScreen extends Component {
               <p>Total: ${this.state.bill.orderTotal.toFixed(2)}</p>
             </div>
             {this.props.cart.map(product => (
-              <CartProductCard key={product.id} product={product} />
+              <CartProductCard
+                key={product.id}
+                product={product}
+                handleClick={() => this.removeProduct(product.id)}
+              />
             ))}
           </div>
           <div className="col-md-4">
@@ -33,10 +60,6 @@ class CartScreen extends Component {
     )
   }
 }
-
-const mapStateToProps = ({ cart }) => ({
-  cart,
-})
 
 CartScreen.propTypes = {
   cart: propTypes.arrayOf(
@@ -50,6 +73,17 @@ CartScreen.propTypes = {
       tax: propTypes.number,
     })
   ).isRequired,
+  removeItemFromCart: propTypes.func.isRequired,
 }
 
-export default connect(mapStateToProps)(CartScreen)
+const mapStateToProps = ({ cart }) => ({
+  cart,
+})
+
+const mapDispatchToProps = dispatch =>
+  bindActionCreators({ removeItemFromCart }, dispatch)
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(CartScreen)
