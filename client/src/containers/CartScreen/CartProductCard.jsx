@@ -1,7 +1,7 @@
 import React from 'react'
 import propTypes from 'prop-types'
 
-const CartProductCard = ({ product }) => (
+const CartProductCard = ({ product, handleClick }) => (
   <div className="card">
     <div className="row">
       <div className="col-md-4">
@@ -16,7 +16,7 @@ const CartProductCard = ({ product }) => (
                 Some quick example text to build on the card title and make up
                 the bulk of the content.
               </p>
-              <button className="btn btn-outline-danger">
+              <button className="btn btn-outline-danger" onClick={handleClick}>
                 Remove from cart
               </button>
             </div>
@@ -49,6 +49,7 @@ CartProductCard.propTypes = {
     discountedPrice: propTypes.number,
     tax: propTypes.number,
   }).isRequired,
+  handleClick: propTypes.func.isRequired,
 }
 
 export default CartProductCard

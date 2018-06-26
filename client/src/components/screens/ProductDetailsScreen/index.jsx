@@ -9,6 +9,10 @@ class ProductDetailsScreen extends Component {
     autoplay: false,
   }
 
+  componentDidMount() {
+    // Fetch product details here.
+  }
+
   render() {
     return (
       <div className="container mt-3">
@@ -17,7 +21,7 @@ class ProductDetailsScreen extends Component {
             <ProductPhotosCarousel autoplay={this.state.autoplay} />
           </div>
           <div className="col-md-6">
-            <ProductDetails product={this.props.product} />
+            <ProductDetails id={this.props.match.params.id} />
           </div>
         </div>
       </div>
@@ -26,8 +30,10 @@ class ProductDetailsScreen extends Component {
 }
 
 ProductDetailsScreen.propTypes = {
-  product: propTypes.objectOf({
-    id: propTypes.string,
+  match: propTypes.shape({
+    params: propTypes.shape({
+      id: propTypes.string.isRequired,
+    }).isRequired,
   }).isRequired,
 }
 
