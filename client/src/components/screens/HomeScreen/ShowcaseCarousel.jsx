@@ -11,11 +11,11 @@ const generatePhotos = ({ showcaseImageUris, styles, imgStyles }) =>
   ))
 
 const showcaseImageUris = [
-  'https://source.unsplash.com/random/1920x598',
-  'https://source.unsplash.com/random/1920x599',
-  'https://source.unsplash.com/random/1920x600',
-  'https://source.unsplash.com/random/1920x601',
-  'https://source.unsplash.com/random/1920x602',
+  'https://source.unsplash.com/random/1920x798',
+  'https://source.unsplash.com/random/1920x799',
+  'https://source.unsplash.com/random/1920x800',
+  'https://source.unsplash.com/random/1920x801',
+  'https://source.unsplash.com/random/1920x802',
 ]
 
 const styles = {
