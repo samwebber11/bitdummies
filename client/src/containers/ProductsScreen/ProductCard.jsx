@@ -14,7 +14,7 @@ const ProductCard = props => {
 
   return (
     <Link style={{ all: 'initial' }} to={`/products/${id}`}>
-      <div className="card" style={{ maxWidth: '20rem' }}>
+      <div className="card" style={{ width: '20rem' }}>
         <img className="card-img-top" src={imagePath} alt="Product card" />
         <div className="card-body">
           <div className="d-flex justify-content-between">
