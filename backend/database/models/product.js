@@ -13,6 +13,7 @@ const ProductSchema = new Schema({
     type: String,
     required: true,
     enum: ['XS', 'S', 'M', 'L', 'XL', 'Onesize'],
+    default: 'Onesize',
   },
   description: {
     type: String,
@@ -36,18 +37,18 @@ const ProductSchema = new Schema({
   tax: {
     type: Number,
     required: true,
-    enum: [5, 10, 12.5, 18, 28],
+    enum: [5, 10, 12.5, 18, 23.5, 28],
+    default: 5,
   },
   quantityAvailable: {
     type: Number,
     required: true,
+    min: 0,
   },
-  image: [
+  imagePath: [
     {
-      path: {
-        type: String,
-        required: true,
-      },
+      type: String,
+      required: true,
     },
   ],
   delicacy: {

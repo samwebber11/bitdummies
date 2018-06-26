@@ -23,7 +23,7 @@ const OrderSchema = new Schema({
       tax: {
         type: Number,
         required: true,
-        enum: [5, 10, 12.5, 18, 28],
+        enum: [5, 10, 12.5, 18, 23.5, 28],
         default: 5,
       },
       discount: {
@@ -32,7 +32,7 @@ const OrderSchema = new Schema({
         min: 0,
         required: true,
       },
-      discountPrice: {
+      discountedPrice: {
         type: Number,
         min: 0,
         required: true,
@@ -41,6 +41,7 @@ const OrderSchema = new Schema({
         type: String,
         required: true,
         enum: ['XS', 'S', 'M', 'L', 'XL', 'Onesize'],
+        default: 'Onesize',
       },
     },
   ],
@@ -81,12 +82,10 @@ const OrderSchema = new Schema({
 
 // Order Function to get the discount Price
 OrderSchema.pre('save', function(next) {
-  const pro = this
-  for (let i = 0; i < product.length; i++) {
-    pro.product[i].discountPrice =
-      pro.product[i].actualPrice -
-      (pro.product[i].actualPrice * pro.product[i].discount) / 100
-  }
+  this.product.forEach(pro => {
+    pro.discountedPrice =
+      pro.actualPrice - (pro.actualPrice * pro.discount) / 100
+  })
   next()
 })
 
