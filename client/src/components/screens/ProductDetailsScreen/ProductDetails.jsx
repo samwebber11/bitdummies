@@ -1,4 +1,5 @@
 import React from 'react'
+import propTypes from 'prop-types'
 
 const ProductDetails = ({ product }) => (
   <div>
@@ -19,5 +20,20 @@ const ProductDetails = ({ product }) => (
     <p>Lorem ipsum dolor sit amet.</p>
   </div>
 )
+
+ProductDetails.propTypes = {
+  product: propTypes.shape({
+    name: propTypes.string.isRequired,
+    category: propTypes.string.isRequired,
+    size: propTypes.string.isRequired,
+    quantityAvailable: propTypes.number.isRequired,
+    description: propTypes.string.isRequired,
+    actualPrice: propTypes.number.isRequired,
+    discount: propTypes.number.isRequired,
+    tax: propTypes.number.isRequired,
+    imagePath: propTypes.arrayOf(propTypes.string).isRequired,
+    delicacy: propTypes.string.isRequired,
+  }).isRequired,
+}
 
 export default ProductDetails
