@@ -1,7 +1,9 @@
-import React from 'react'
+import React, { Component } from 'react'
 
 import ProductCardGroup from './ProductCardGroup'
 import ProductFilter from './ProductFilter'
+import client from '../../apollo-client/client'
+import { fetchProducts } from '../../queries/'
 
 // Hard coded products list.
 const productGroupsList = [
@@ -53,22 +55,47 @@ const productGroupsList = [
   },
 ]
 
-const ProductsScreen = () => (
-  <div className="container py-4">
-    <div className="row">
-      <div className="col-md-3">
-        <ProductFilter />
+class ProductsScreen extends Component {
+  state = {
+    productGroupsList: [],
+  }
+
+  componentDidMount() {
+    client
+      .query({
+        query: fetchProducts,
+      })
+      .then(response => {
+        console.log(response.data)
+        this.setState({ productGroupsList: response.data.products })
+      })
+  }
+
+  render() {
+    return (
+      <div className="container py-4">
+        <div className="row">
+          <div className="col-md-3">
+            {/* {this.state.productGroupsList[0] ? (
+              <img src={this.state.productGroupsList[0].imagePath[0]} alt="" />
+            ) : (
+              ''
+            )} */}
+
+            <ProductFilter />
+          </div>
+          <div className="col-md-9">
+            {productGroupsList.map(productGroup => (
+              <ProductCardGroup
+                key={productGroup.category}
+                productGroup={productGroup}
+              />
+            ))}
+          </div>
+        </div>
       </div>
-      <div className="col-md-9">
-        {productGroupsList.map(productGroup => (
-          <ProductCardGroup
-            key={productGroup.category}
-            productGroup={productGroup}
-          />
-        ))}
-      </div>
-    </div>
-  </div>
-)
+    )
+  }
+}
 
 export default ProductsScreen

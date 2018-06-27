@@ -3,14 +3,27 @@ import propTypes from 'prop-types'
 
 import ProductPhotosCarousel from './ProductPhotosCarousel'
 import ProductDetails from './ProductDetails'
+import client from '../../../apollo-client/client'
+import { getProductDetails } from '../../../queries/'
 
 class ProductDetailsScreen extends Component {
   state = {
     autoplay: false,
+    product: {},
   }
 
   componentDidMount() {
-    // Fetch product details here.
+    const { id } = this.props.match.params
+    client
+      .query({
+        query: getProductDetails,
+        variables: {
+          id,
+        },
+      })
+      .then(response => {
+        this.setState({ product: response.data.product })
+      })
   }
 
   render() {
@@ -18,10 +31,13 @@ class ProductDetailsScreen extends Component {
       <div className="container mt-3">
         <div className="row">
           <div className="col-md-6">
-            <ProductPhotosCarousel autoplay={this.state.autoplay} />
+            <ProductPhotosCarousel
+              autoplay={this.state.autoplay}
+              images={this.state.product.imagePath}
+            />
           </div>
           <div className="col-md-6">
-            <ProductDetails id={this.props.match.params.id} />
+            <ProductDetails product={this.state.product} />
           </div>
         </div>
       </div>
@@ -32,8 +48,8 @@ class ProductDetailsScreen extends Component {
 ProductDetailsScreen.propTypes = {
   match: propTypes.shape({
     params: propTypes.shape({
-      id: propTypes.string.isRequired,
-    }).isRequired,
+      id: propTypes.string,
+    }),
   }).isRequired,
 }
 

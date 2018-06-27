@@ -9,7 +9,7 @@ import calculateBill from './calculateBill'
 import { removeItemFromCart } from '../../actions/cartActions'
 
 import client from '../../apollo-client/client'
-import fetchSomething from '../../queries/'
+import { fetchSomething } from '../../queries/'
 
 class CartScreen extends Component {
   state = {
