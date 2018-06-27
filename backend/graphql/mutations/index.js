@@ -1,9 +1,14 @@
-import { addProduct } from './addition'
-import { updateProduct } from './updation'
-import { removeProduct } from './remove'
+import { GraphQLObjectType } from 'graphql'
 
-module.exports = {
-  addProduct,
-  removeProduct,
-  updateProduct,
-}
+import { addProduct, removeProduct, updateProduct } from './productMutations'
+
+const Mutation = new GraphQLObjectType({
+  name: 'Mutation',
+  fields: {
+    addProduct,
+    removeProduct,
+    updateProduct,
+  },
+})
+
+export default Mutation
