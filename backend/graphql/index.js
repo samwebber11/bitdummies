@@ -1,11 +1,11 @@
-import { GraphQLSchema, GraphQLObjectType } from 'graphql'
-import { queryProductType } from './queries/queries'
-import mutation from './mutations/index'
+import { GraphQLSchema } from 'graphql'
 
-exports.productSchema = new GraphQLSchema({
-  query: queryProductType,
-  mutation: new GraphQLObjectType({
-    name: 'Mutation',
-    fields: mutation,
-  }),
+import RootQuery from './queries/'
+import Mutation from './mutations/'
+
+const schema = new GraphQLSchema({
+  query: RootQuery,
+  mutation: Mutation,
 })
+
+export default schema

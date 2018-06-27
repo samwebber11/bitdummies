@@ -15,7 +15,7 @@ import userRouter from './routes/user'
 import passport from './passport'
 import keys from './config/keys'
 import './database'
-import { productSchema } from './graphql/index'
+import schema from './graphql/'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -37,7 +37,7 @@ app.use(
   '/graphql',
   cors(),
   graphqlHTTP({
-    schema: productSchema,
+    schema,
     rootValue: global,
     graphiql: true,
   })
