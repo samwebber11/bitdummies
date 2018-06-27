@@ -4,6 +4,8 @@ import {
   GraphQLInt,
   GraphQLFloat,
   GraphQLID,
+  GraphQLList,
+  GraphQLInputObjectType,
 } from 'graphql'
 
 import Product from '../../database/models/product'
@@ -19,7 +21,21 @@ const addProduct = {
       type: new GraphQLNonNull(GraphQLString),
     },
     size: {
-      type: new GraphQLNonNull(GraphQLString),
+      type: new GraphQLNonNull(
+        new GraphQLList(
+          new GraphQLInputObjectType({
+            name: 'sizeInput',
+            fields: {
+              label: {
+                type: GraphQLString,
+              },
+              quantityAvailable: {
+                type: GraphQLInt,
+              },
+            },
+          })
+        )
+      ),
     },
     description: {
       type: new GraphQLNonNull(GraphQLString),
@@ -33,8 +49,10 @@ const addProduct = {
     tax: {
       type: new GraphQLNonNull(GraphQLFloat),
     },
-    quantityAvailable: {
-      type: new GraphQLNonNull(GraphQLInt),
+    imagePath: {
+      type: new GraphQLNonNull(
+        new GraphQLList(new GraphQLNonNull(GraphQLString))
+      ),
     },
     delicacy: {
       type: new GraphQLNonNull(GraphQLString),
@@ -54,7 +72,6 @@ const removeProduct = {
   type: ProductType,
   args: {
     id: {
-      name: 'id',
       type: new GraphQLNonNull(GraphQLID),
     },
   },
@@ -71,7 +88,6 @@ const updateProduct = {
   type: ProductType,
   args: {
     id: {
-      name: 'id',
       type: new GraphQLNonNull(GraphQLID),
     },
     name: {
@@ -81,7 +97,21 @@ const updateProduct = {
       type: new GraphQLNonNull(GraphQLString),
     },
     size: {
-      type: new GraphQLNonNull(GraphQLString),
+      type: new GraphQLNonNull(
+        new GraphQLList(
+          new GraphQLInputObjectType({
+            name: 'sizeInputUpdate',
+            fields: {
+              label: {
+                type: GraphQLString,
+              },
+              quantityAvailable: {
+                type: GraphQLInt,
+              },
+            },
+          })
+        )
+      ),
     },
     description: {
       type: new GraphQLNonNull(GraphQLString),
@@ -95,8 +125,10 @@ const updateProduct = {
     tax: {
       type: new GraphQLNonNull(GraphQLFloat),
     },
-    quantityAvailable: {
-      type: new GraphQLNonNull(GraphQLInt),
+    imagePath: {
+      type: new GraphQLNonNull(
+        new GraphQLList(new GraphQLNonNull(GraphQLString))
+      ),
     },
     delicacy: {
       type: new GraphQLNonNull(GraphQLString),
@@ -114,7 +146,7 @@ const updateProduct = {
           actualPrice: args.actualPrice,
           discount: args.discount,
           tax: args.tax,
-          quantityAvailable: args.quantityAvailable,
+          imagePath: args.imagePath,
           delicacy: args.delicacy,
         },
       },
