@@ -6,6 +6,7 @@ import https from 'https'
 import fs from 'fs'
 import graphqlHTTP from 'express-graphql'
 import cors from 'cors'
+import path from 'path'
 
 import router from './routes'
 import authRouter from './routes/auth'
@@ -32,6 +33,10 @@ app.use(
     saveUninitialized: false,
   })
 )
+
+// Serving static files/images.
+app.use('/static', express.static(path.join(__dirname, 'public')))
+
 // GraphQl ServerSetUp
 app.use(
   '/graphql',

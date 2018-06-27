@@ -5,6 +5,7 @@ import {
   GraphQLInt,
   GraphQLFloat,
   GraphQLID,
+  GraphQLList,
 } from 'graphql'
 
 const ProductType = new GraphQLObjectType({
@@ -20,7 +21,19 @@ const ProductType = new GraphQLObjectType({
       type: GraphQLString,
     },
     size: {
-      type: GraphQLString,
+      type: new GraphQLList(
+        new GraphQLObjectType({
+          name: 'size',
+          fields: {
+            label: {
+              type: GraphQLString,
+            },
+            quantityAvailable: {
+              type: GraphQLInt,
+            },
+          },
+        })
+      ),
     },
     description: {
       type: GraphQLString,
@@ -31,11 +44,14 @@ const ProductType = new GraphQLObjectType({
     discount: {
       type: GraphQLInt,
     },
+    discountedPrice: {
+      type: GraphQLFloat,
+    },
     tax: {
       type: GraphQLFloat,
     },
-    quantityAvailable: {
-      type: GraphQLInt,
+    imagePath: {
+      type: new GraphQLList(GraphQLString),
     },
     delicacy: {
       type: GraphQLString,
