@@ -1,11 +1,8 @@
 import {
   GraphQLObjectType,
-  GraphQLInt,
   GraphQLNonNull,
   GraphQLString,
-  GraphQLFloat,
   GraphQLID,
-  GraphQLList,
 } from 'graphql'
 
 const AddressType = new GraphQLObjectType({

@@ -2,6 +2,7 @@ import { GraphQLObjectType } from 'graphql'
 
 import { addProduct, removeProduct, updateProduct } from './productMutations'
 import { addOrder, cancelOrder, updateOrder } from './orderMutations'
+import { addAddress, updateAddress, removeAddress } from './addressMutations'
 
 const Mutation = new GraphQLObjectType({
   name: 'Mutation',
@@ -12,6 +13,9 @@ const Mutation = new GraphQLObjectType({
     addOrder,
     updateOrder,
     cancelOrder,
+    addAddress,
+    updateAddress,
+    removeAddress,
   },
 })
 
