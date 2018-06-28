@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   GraphQLNonNull,
   GraphQLString,
@@ -8,15 +9,21 @@ import {
   GraphQLList,
   GraphQLObjectType,
 } from 'graphql'
+=======
+import { GraphQLNonNull, GraphQLString, GraphQLID, GraphQLList } from 'graphql'
+>>>>>>> 5553a658dcf99f5fffd5e91a28fcf00e224bdf99
 import GraphQLDate from 'graphql-date'
+
 import Order from '../../database/models/order'
 import OrderType from '../types/OrderType'
+import ProductInputType from '../types/ProductInputType'
+import PaymentInputType from '../types/PaymentInputType'
 
-
-const addOrder={
+const addOrder = {
   type: OrderType,
   args: {
     product: {
+<<<<<<< HEAD
       type: new GraphQLNonNull(
         new GraphQLList(
           new GraphQLInputObjectType({
@@ -47,11 +54,15 @@ const addOrder={
           })
         )
       ),
+=======
+      type: new GraphQLNonNull(new GraphQLList(ProductInputType)),
+>>>>>>> 5553a658dcf99f5fffd5e91a28fcf00e224bdf99
     },
     status: {
       type: new GraphQLNonNull(GraphQLString),
     },
     payment: {
+<<<<<<< HEAD
       type: new GraphQLNonNull(
         new GraphQLList(
           new GraphQLObjectType({
@@ -70,6 +81,9 @@ const addOrder={
           })
         )
       ),
+=======
+      type: new GraphQLNonNull(new GraphQLList(PaymentInputType)),
+>>>>>>> 5553a658dcf99f5fffd5e91a28fcf00e224bdf99
     },
     shippingAddress: {
       type: new GraphQLNonNull(GraphQLString),
@@ -87,8 +101,6 @@ const addOrder={
     return savedOrder
   },
 }
-
-
 
 const cancelOrder = {
   type: OrderType,
@@ -113,6 +125,7 @@ const updateOrder = {
       type: new GraphQLNonNull(GraphQLID),
     },
     product: {
+<<<<<<< HEAD
       type: new GraphQLNonNull(
         new GraphQLList(
           new GraphQLInputObjectType({
@@ -143,11 +156,15 @@ const updateOrder = {
           })
         )
       ),
+=======
+      type: new GraphQLNonNull(new GraphQLList(ProductInputType)),
+>>>>>>> 5553a658dcf99f5fffd5e91a28fcf00e224bdf99
     },
     status: {
       type: new GraphQLNonNull(GraphQLString),
     },
     payment: {
+<<<<<<< HEAD
       type: new GraphQLNonNull(
         new GraphQLList(
           new GraphQLObjectType({
@@ -166,6 +183,9 @@ const updateOrder = {
           })
         )
       ),
+=======
+      type: new GraphQLNonNull(new GraphQLList(PaymentInputType)),
+>>>>>>> 5553a658dcf99f5fffd5e91a28fcf00e224bdf99
     },
     shippingAddress: {
       type: new GraphQLNonNull(GraphQLString),
@@ -174,7 +194,11 @@ const updateOrder = {
       type: new GraphQLNonNull(GraphQLDate),
     },
   },
+<<<<<<< HEAD
   resolve: (parent, args) =>
+=======
+  resolve: (parent, args) => {
+>>>>>>> 5553a658dcf99f5fffd5e91a28fcf00e224bdf99
     Order.findByIdAndUpdate(
       args.id,
       {
@@ -187,7 +211,12 @@ const updateOrder = {
         },
       },
       { new: true }
+<<<<<<< HEAD
     ).catch(err => new Error(err)),
+=======
+    ).catch(err => new Error(err))
+  },
+>>>>>>> 5553a658dcf99f5fffd5e91a28fcf00e224bdf99
 }
 
 export { addOrder, cancelOrder, updateOrder }
