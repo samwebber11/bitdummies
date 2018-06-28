@@ -12,7 +12,7 @@ const AddressType = new GraphQLObjectType({
       type: new GraphQLNonNull(GraphQLID),
     },
     address1: {
-      type: GraphQLString,
+      type: new GraphQLNonNull(GraphQLString),
     },
     address2: {
       type: GraphQLString,
@@ -21,16 +21,16 @@ const AddressType = new GraphQLObjectType({
       type: GraphQLString,
     },
     city: {
-      type: GraphQLString,
+      type: new GraphQLNonNull(GraphQLString),
     },
     state: {
-      type: GraphQLString,
+      type: new GraphQLNonNull(GraphQLString),
     },
     zip: {
-      type: GraphQLString,
+      type: new GraphQLNonNull(GraphQLString),
     },
     country: {
-      type: GraphQLString,
+      type: new GraphQLNonNull(GraphQLString),
     },
   },
 })
