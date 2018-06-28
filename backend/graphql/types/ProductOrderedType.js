@@ -7,10 +7,10 @@ import {
   GraphQLString,
 } from 'graphql'
 
-const ProductInputType = new GraphQLInputObjectType({
-  name: 'ProductInputType',
+const ProductOrderedType = new GraphQLInputObjectType({
+  name: 'ProductOrdered',
   fields: {
-    id: {
+    product: {
       type: new GraphQLNonNull(GraphQLID),
     },
     quantity: {
@@ -34,4 +34,4 @@ const ProductInputType = new GraphQLInputObjectType({
   },
 })
 
-export default ProductInputType
+export default ProductOrderedType

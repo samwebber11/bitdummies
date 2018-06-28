@@ -13,7 +13,7 @@ const products = {
   args: {
     orderBy: {
       type: new GraphQLInputObjectType({
-        name: 'orderProductsBy',
+        name: 'SortProductsBy',
         fields: {
           // TODO: Should change it to enum type of 'asc' and 'desc'.
           name: {

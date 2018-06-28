@@ -3,9 +3,9 @@ import mongoose from 'mongoose'
 const { Schema } = mongoose
 
 const OrderSchema = new Schema({
-  product: [
+  products: [
     {
-      productID: {
+      product: {
         type: Schema.Types.ObjectId,
         ref: 'Product',
         required: true,
@@ -80,11 +80,11 @@ const OrderSchema = new Schema({
   },
 })
 
-// Order Function to get the discount Price
+// Order function to get the discounted price.
 OrderSchema.pre('save', function(next) {
-  this.product.forEach(pro => {
-    pro.discountedPrice =
-      pro.actualPrice - (pro.actualPrice * pro.discount) / 100
+  this.products.forEach(product => {
+    product.discountedPrice =
+      product.actualPrice - (product.actualPrice * product.discount) / 100
   })
   next()
 })
