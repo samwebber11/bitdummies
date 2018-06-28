@@ -2,6 +2,7 @@ import { GraphQLObjectType } from 'graphql'
 
 import { products, product } from './productQueries'
 import { orders, order } from './orderQueries'
+import { addresses } from './addressQueries'
 
 const RootQuery = new GraphQLObjectType({
   name: 'RootQuery',
@@ -10,6 +11,7 @@ const RootQuery = new GraphQLObjectType({
     product,
     orders,
     order,
+    addresses,
   },
 })
 

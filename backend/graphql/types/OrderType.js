@@ -2,10 +2,10 @@ import {
   GraphQLObjectType,
   GraphQLNonNull,
   GraphQLString,
-  GraphQLInt,
-  GraphQLFloat,
   GraphQLID,
   GraphQLList,
+  GraphQLInt,
+  GraphQLFloat,
 } from 'graphql'
 import { GraphQLDate } from 'graphql-date'
 
