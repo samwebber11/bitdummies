@@ -1,3 +1,4 @@
+import float from 'mongoose-float'
 import mongoose from 'mongoose'
 
 const { Schema } = mongoose
@@ -16,7 +17,7 @@ const OrderSchema = new Schema({
         min: 1,
       },
       actualPrice: {
-        type: Number,
+        type: float.loadType(mongoose, 2),
         required: true,
         min: 0,
       },
@@ -33,7 +34,7 @@ const OrderSchema = new Schema({
         required: true,
       },
       discountedPrice: {
-        type: Number,
+        type: float.loadType(mongoose, 2),
         min: 0,
         required: true,
       },

@@ -1,4 +1,9 @@
-import { GraphQLID, GraphQLList } from 'graphql'
+import {
+  GraphQLID,
+  GraphQLList,
+  GraphQLInputObjectType,
+  GraphQLString,
+} from 'graphql'
 
 import AddressType from '../types/AddressType'
 import Address from '../../database/models/address'
@@ -20,4 +25,27 @@ const address = {
   },
 }
 
-export { address }
+const addresses = {
+  type: new GraphQLList(AddressType),
+  args: {
+    orderBy: {
+      type: new GraphQLInputObjectType({
+        name: 'SortAddress',
+        fields: {
+          country: {
+            type: GraphQLString,
+          },
+        },
+      }),
+    },
+  },
+  resolve: async (parent, args) => {
+    try {
+      const addressList = await Address.find({}).sort(args.orderBy)
+      return addressList
+    } catch (err) {
+      console.log('Error occurred in fetching products: ', err)
+    }
+  },
+}
+export { address, addresses }
