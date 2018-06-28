@@ -10,10 +10,10 @@ const addAddress = {
       type: new GraphQLNonNull(GraphQLString),
     },
     address2: {
-      type: new GraphQLNonNull(GraphQLString),
+      type: GraphQLString,
     },
     landmark: {
-      type: new GraphQLNonNull(GraphQLString),
+      type: GraphQLString,
     },
     city: {
       type: new GraphQLNonNull(GraphQLString),
@@ -28,13 +28,14 @@ const addAddress = {
       type: new GraphQLNonNull(GraphQLString),
     },
   },
-  resolve: (parent, args) => {
-    const address = new Address(args)
-    const saveAddress = address.save()
-    if (!saveAddress) {
-      throw new Error('Error')
+  resolve: async (parent, args) => {
+    try {
+      let address = new Address(args)
+      address = await address.save()
+      return address
+    } catch (err) {
+      console.log('Error occurred in adding address: ', err)
     }
-    return saveAddress
   },
 }
 
@@ -45,12 +46,13 @@ const removeAddress = {
       type: new GraphQLNonNull(GraphQLID),
     },
   },
-  resolve: (parent, args) => {
-    const remove = Address.findByIdAndRemove(args.id).exec()
-    if (!remove) {
-      throw new Error('Error')
+  resolve: async (parent, args) => {
+    try {
+      const address = await Address.findByIdAndRemove(args.id)
+      return address
+    } catch (err) {
+      console.log('Error occurred in removing address: ', err)
     }
-    return remove
   },
 }
 
@@ -61,10 +63,10 @@ const updateAddress = {
       type: new GraphQLNonNull(GraphQLString),
     },
     address2: {
-      type: new GraphQLNonNull(GraphQLString),
+      type: GraphQLString,
     },
     landmark: {
-      type: new GraphQLNonNull(GraphQLString),
+      type: GraphQLString,
     },
     city: {
       type: new GraphQLNonNull(GraphQLString),
@@ -79,22 +81,27 @@ const updateAddress = {
       type: new GraphQLNonNull(GraphQLString),
     },
   },
-  resolve: (parent, args) => {
-    Address.findByIdAndUpdate(
-      args.id,
-      {
-        $set: {
-          address1: args.address1,
-          address2: args.address2,
-          landmark: args.landmark,
-          city: args.city,
-          state: args.state,
-          zip: args.zip,
-          country: args.country,
+  resolve: async (parent, args) => {
+    try {
+      const address = await Address.findByIdAndUpdate(
+        args.id,
+        {
+          $set: {
+            address1: args.address1,
+            address2: args.address2,
+            landmark: args.landmark,
+            city: args.city,
+            state: args.state,
+            zip: args.zip,
+            country: args.country,
+          },
         },
-      },
-      { new: true }
-    ).catch(err => new Error(err))
+        { new: true }
+      )
+      return address
+    } catch (err) {
+      console.log('Error occurred in updating address: ', err)
+    }
   },
 }
 
