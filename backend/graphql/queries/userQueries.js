@@ -39,10 +39,6 @@ const user = {
           lastName: {
             type: GraphQLString,
           },
-        },
-      }),
-      type: new GraphQLObjectType({
-        fields: {
           name: {
             type: GraphQLString,
           },

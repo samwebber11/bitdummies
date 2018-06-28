@@ -58,7 +58,7 @@ const removeUser = {
 }
 
 const updateUser = {
-  type: Usertype,
+  type: UserType,
   args: {
     id: {
       type: new GraphQLNonNull(GraphQLID),
