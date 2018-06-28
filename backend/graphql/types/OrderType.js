@@ -2,12 +2,12 @@ import {
   GraphQLObjectType,
   GraphQLNonNull,
   GraphQLString,
-  GraphQLInt,
-  GraphQLFloat,
   GraphQLID,
   GraphQLList,
 } from 'graphql'
 import { GraphQLDate } from 'graphql-date'
+import ProductInputType from './ProductInputType'
+import PaymentInputType from './PaymentInputType'
 
 const OrderType = new GraphQLObjectType({
   name: 'Order',
@@ -16,55 +16,13 @@ const OrderType = new GraphQLObjectType({
       type: new GraphQLNonNull(GraphQLID),
     },
     product: {
-      type: new GraphQLList(
-        new GraphQLObjectType({
-          name: 'product',
-          fields: {
-            id: {
-              type: new GraphQLNonNull(GraphQLID),
-            },
-            quantity: {
-              type: GraphQLInt,
-            },
-            actualPrice: {
-              type: GraphQLFloat,
-            },
-            tax: {
-              type: GraphQLFloat,
-            },
-            discount: {
-              type: GraphQLInt,
-            },
-            discountedPrice: {
-              type: GraphQLFloat,
-            },
-            size: {
-              type: GraphQLString,
-            },
-          },
-        })
-      ),
+      type: new GraphQLList(new GraphQLObjectType(ProductInputType)),
     },
     status: {
-      type: GraphQLNonNull(GraphQLString),
+      type: new GraphQLNonNull(GraphQLString),
     },
     payment: {
-      type: new GraphQLList(
-        new GraphQLObjectType({
-          name: 'payment',
-          fields: {
-            transactionID: {
-              type: new GraphQLNonNull(GraphQLID),
-            },
-            status: {
-              type: GraphQLString,
-            },
-            mode: {
-              type: GraphQLString,
-            },
-          },
-        })
-      ),
+      type: new GraphQLList(new GraphQLObjectType(PaymentInputType)),
     },
     shippingAddress: {
       type: GraphQLString,
