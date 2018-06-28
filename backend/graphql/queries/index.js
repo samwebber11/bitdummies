@@ -1,15 +1,15 @@
 import { GraphQLObjectType } from 'graphql'
 
 import { products, product } from './productQueries'
-import { Orders, orders } from './orderQueries'
+import { orders, order } from './orderQueries'
 
 const RootQuery = new GraphQLObjectType({
   name: 'RootQuery',
   fields: {
     products,
     product,
-    Orders,
     orders,
+    order,
   },
 })
 

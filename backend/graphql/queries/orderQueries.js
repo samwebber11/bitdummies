@@ -4,7 +4,6 @@ import {
   GraphQLInputObjectType,
   GraphQLString,
 } from 'graphql'
-import { GraphQLDate } from 'graphql-date'
 
 import OrderType from '../types/OrderType'
 import Order from '../../database/models/order'
@@ -14,10 +13,10 @@ const orders = {
   args: {
     orderBy: {
       type: new GraphQLInputObjectType({
-        name: 'OrderedList',
+        name: 'SortOrdersBy',
         fields: {
           orderedAt: {
-            type: GraphQLDate,
+            type: GraphQLString,
           },
         },
       }),
@@ -25,10 +24,10 @@ const orders = {
   },
   resolve: async (parent, args) => {
     try {
-      const OrderList = await Order.find({}).sort(args.orderBy)
-      return OrderList
+      const ordersList = await Order.find({}).sort(args.orderBy)
+      return ordersList
     } catch (err) {
-      console.log('Error occured in fetching products', err)
+      console.log('Error occurred in fetching orders: ', err)
     }
   },
 }
@@ -67,10 +66,8 @@ const orders = {
 //   },
 // }
 
-
-
-const Orders = {
-  type: Order,
+const order = {
+  type: OrderType,
   args: {
     id: {
       type: GraphQLID,
@@ -81,9 +78,9 @@ const Orders = {
       const orderPlaced = await Order.findById(args.id)
       return orderPlaced
     } catch (err) {
-      console.log('Error fetching order')
+      console.log('Error occurred in fetching order by ID: ', err)
     }
   },
 }
 
-export { Orders, orders }
+export { orders, order }

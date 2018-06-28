@@ -9,65 +9,78 @@ import {
 } from 'graphql'
 import { GraphQLDate } from 'graphql-date'
 
+import Product from '../../database/models/product'
+import Address from '../../database/models/address'
+import ProductType from './ProductType'
+import PaymentType from './PaymentType'
+import AddressType from './AddressType'
+
 const OrderType = new GraphQLObjectType({
   name: 'Order',
   fields: () => ({
     id: {
       type: new GraphQLNonNull(GraphQLID),
     },
-    product: {
+    products: {
       type: new GraphQLList(
         new GraphQLObjectType({
-          name: 'product',
-          fields: {
-            id: {
-              type: new GraphQLNonNull(GraphQLID),
-            },
-            quantity: {
-              type: GraphQLInt,
-            },
-            actualPrice: {
-              type: GraphQLFloat,
-            },
-            tax: {
-              type: GraphQLFloat,
-            },
-            discount: {
-              type: GraphQLInt,
-            },
-            discountedPrice: {
-              type: GraphQLFloat,
+          name: 'ProductBought',
+          fields: () => ({
+            product: {
+              type: ProductType,
+              resolve: async (parent, args) => {
+                try {
+                  const product = await Product.findById(
+                    parent.product,
+                    'name category description imagePath delicacy'
+                  )
+                  return product
+                } catch (err) {
+                  console.log(
+                    'Error in fetching product details in order: ',
+                    err
+                  )
+                }
+              },
             },
             size: {
-              type: GraphQLString,
+              type: new GraphQLNonNull(GraphQLString),
             },
-          },
+            quantity: {
+              type: new GraphQLNonNull(GraphQLInt),
+            },
+            actualPrice: {
+              type: new GraphQLNonNull(GraphQLFloat),
+            },
+            discount: {
+              type: new GraphQLNonNull(GraphQLInt),
+            },
+            discountedPrice: {
+              type: new GraphQLNonNull(GraphQLFloat),
+            },
+            tax: {
+              type: new GraphQLNonNull(GraphQLFloat),
+            },
+          }),
         })
       ),
     },
     status: {
-      type: GraphQLNonNull(GraphQLString),
+      type: new GraphQLNonNull(GraphQLString),
     },
     payment: {
-      type: new GraphQLList(
-        new GraphQLObjectType({
-          name: 'payment',
-          fields: {
-            transactionID: {
-              type: new GraphQLNonNull(GraphQLID),
-            },
-            status: {
-              type: GraphQLString,
-            },
-            mode: {
-              type: GraphQLString,
-            },
-          },
-        })
-      ),
+      type: new GraphQLNonNull(PaymentType),
     },
     shippingAddress: {
-      type: GraphQLString,
+      type: new GraphQLNonNull(AddressType),
+      resolve: async (parent, args) => {
+        try {
+          const address = await Address.findById(parent.shippingAddress)
+          return address
+        } catch (err) {
+          console.log('Error in fetching address for order: ', err)
+        }
+      },
     },
     orderedAt: {
       type: GraphQLDate,

@@ -1,7 +1,7 @@
-import { GraphQLInputObjectType, GraphQLNonNull, GraphQLString } from 'graphql'
+import { GraphQLObjectType, GraphQLString, GraphQLNonNull } from 'graphql'
 
-const PaymentInputType = new GraphQLInputObjectType({
-  name: 'PaymentInput',
+const PaymentType = new GraphQLObjectType({
+  name: 'Payment',
   fields: {
     status: {
       type: new GraphQLNonNull(GraphQLString),
@@ -15,4 +15,4 @@ const PaymentInputType = new GraphQLInputObjectType({
   },
 })
 
-export default PaymentInputType
+export default PaymentType
