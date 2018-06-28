@@ -1,8 +1,7 @@
 import {
   GraphQLList,
   GraphQLID,
-  GraphQLInputObjectType,
-  GraphQLString,
+  GraphQLInputObjectType
 } from 'graphql'
 import { GraphQLDate } from 'graphql-date'
 

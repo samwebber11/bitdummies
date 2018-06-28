@@ -4,6 +4,9 @@ import {
   GraphQLInt,
   GraphQLFloat,
   GraphQLID,
+  GraphQLInputObjectType,
+  GraphQLList,
+  GraphQLObjectType,
 } from 'graphql'
 import GraphQLDate from 'graphql-date'
 import Order from '../../database/models/order'
@@ -16,32 +19,33 @@ const addOrder={
     product: {
       type: new GraphQLNonNull(
         new GraphQLList(
-        new GraphQLInputObjectType({
-          name: 'product',
-          fields: {
-            id: {
-              type: new GraphQLNonNull(GraphQLID),
+          new GraphQLInputObjectType({
+            name: 'AddProduct',
+            fields: {
+              id: {
+                type: new GraphQLNonNull(GraphQLID),
+              },
+              quantity: {
+                type: new GraphQLNonNull(GraphQLInt),
+              },
+              actualPrice: {
+                type: new GraphQLNonNull(GraphQLFloat),
+              },
+              tax: {
+                type: new GraphQLNonNull(GraphQLFloat),
+              },
+              discount: {
+                type: new GraphQLNonNull(GraphQLInt),
+              },
+              discountedPrice: {
+                type: new GraphQLNonNull(GraphQLFloat),
+              },
+              size: {
+                type: new GraphQLNonNull(GraphQLString),
+              },
             },
-            quantity: {
-              type: new GraphQLNonNull(GraphQLInt),
-            },
-            actualPrice: {
-              type: new GraphQLNonNull(GraphQLFloat),
-            },
-            tax: {
-              type: new GraphQLNonNull(GraphQLFloat),
-            },
-            discount: {
-              type: new GraphQLNonNull(GraphQLInt),
-            },
-            discountedPrice: {
-              type: new GraphQLNonNull(GraphQLFloat),
-            },
-            size: {
-              type: new GraphQLNonNull(GraphQLString),
-            },
-          },
-        })
+          })
+        )
       ),
     },
     status: {
@@ -50,22 +54,22 @@ const addOrder={
     payment: {
       type: new GraphQLNonNull(
         new GraphQLList(
-        new GraphQLObjectType({
-          name: 'payment',
-          fields: {
-            transactionID: {
-              type: new GraphQLNonNull(GraphQLID),
+          new GraphQLObjectType({
+            name: 'AddPayment',
+            fields: {
+              transactionID: {
+                type: new GraphQLNonNull(GraphQLID),
+              },
+              status: {
+                type: new GraphQLNonNull(GraphQLString),
+              },
+              mode: {
+                type: new GraphQLNonNull(GraphQLString),
+              },
             },
-            status: {
-              type: new GraphQLNonNull(GraphQLString),
-            },
-            mode: {
-              type: new GraphQLNonNull(GraphQLString),
-            },
-          },
-        })
+          })
+        )
       ),
-    ),
     },
     shippingAddress: {
       type: new GraphQLNonNull(GraphQLString),
@@ -74,10 +78,10 @@ const addOrder={
       type: new GraphQLNonNull(GraphQLDate),
     },
   },
-  resolve: (parent,args) => {
-    const order=new Order(args)
-    const savedOrder= order.save()
-    if(!savedOrder) {
+  resolve: (parent, args) => {
+    const order = new Order(args)
+    const savedOrder = order.save()
+    if (!savedOrder) {
       throw new Error('Error')
     }
     return savedOrder
@@ -93,51 +97,51 @@ const cancelOrder = {
       type: new GraphQLNonNull(GraphQLID),
     },
   },
-  resolve: (parent,args) => {
+  resolve: (parent, args) => {
     const cancel = Order.findByIdAndRemove(args.id).exec()
-    if(!cancel) {
+    if (!cancel) {
       throw new Error('Error')
     }
     return cancel
   },
 }
 
-
 const updateOrder = {
   type: OrderType,
   args: {
-    id : {
+    id: {
       type: new GraphQLNonNull(GraphQLID),
     },
     product: {
       type: new GraphQLNonNull(
         new GraphQLList(
-        new GraphQLInputObjectType({
-          name: 'product',
-          fields: {
-            id: {
-              type: new GraphQLNonNull(GraphQLID),
+          new GraphQLInputObjectType({
+            name: 'UpdateProduct',
+            fields: {
+              id: {
+                type: new GraphQLNonNull(GraphQLID),
+              },
+              quantity: {
+                type: new GraphQLNonNull(GraphQLInt),
+              },
+              actualPrice: {
+                type: new GraphQLNonNull(GraphQLFloat),
+              },
+              tax: {
+                type: new GraphQLNonNull(GraphQLFloat),
+              },
+              discount: {
+                type: new GraphQLNonNull(GraphQLInt),
+              },
+              discountedPrice: {
+                type: new GraphQLNonNull(GraphQLFloat),
+              },
+              size: {
+                type: new GraphQLNonNull(GraphQLString),
+              },
             },
-            quantity: {
-              type: new GraphQLNonNull(GraphQLInt),
-            },
-            actualPrice: {
-              type: new GraphQLNonNull(GraphQLFloat),
-            },
-            tax: {
-              type: new GraphQLNonNull(GraphQLFloat),
-            },
-            discount: {
-              type: new GraphQLNonNull(GraphQLInt),
-            },
-            discountedPrice: {
-              type: new GraphQLNonNull(GraphQLFloat),
-            },
-            size: {
-              type: new GraphQLNonNull(GraphQLString),
-            },
-          },
-        })
+          })
+        )
       ),
     },
     status: {
@@ -146,22 +150,22 @@ const updateOrder = {
     payment: {
       type: new GraphQLNonNull(
         new GraphQLList(
-        new GraphQLObjectType({
-          name: 'payment',
-          fields: {
-            transactionID: {
-              type: new GraphQLNonNull(GraphQLID),
+          new GraphQLObjectType({
+            name: 'UpdatePayment',
+            fields: {
+              transactionID: {
+                type: new GraphQLNonNull(GraphQLID),
+              },
+              status: {
+                type: new GraphQLNonNull(GraphQLString),
+              },
+              mode: {
+                type: new GraphQLNonNull(GraphQLString),
+              },
             },
-            status: {
-              type: new GraphQLNonNull(GraphQLString),
-            },
-            mode: {
-              type: new GraphQLNonNull(GraphQLString),
-            },
-          },
-        })
+          })
+        )
       ),
-    ),
     },
     shippingAddress: {
       type: new GraphQLNonNull(GraphQLString),
@@ -170,7 +174,7 @@ const updateOrder = {
       type: new GraphQLNonNull(GraphQLDate),
     },
   },
-  resolve: (parent,args) => {
+  resolve: (parent, args) =>
     Order.findByIdAndUpdate(
       args.id,
       {
@@ -182,9 +186,8 @@ const updateOrder = {
           orderedAt: args.orderedAt,
         },
       },
-      {new : true}
+      { new: true }
     ).catch(err => new Error(err)),
-  },
 }
 
-export { addOrder,cancelOrder,updateOrder}
+export { addOrder, cancelOrder, updateOrder }

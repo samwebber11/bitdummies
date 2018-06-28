@@ -18,7 +18,7 @@ const OrderType = new GraphQLObjectType({
     product: {
       type: new GraphQLList(
         new GraphQLObjectType({
-          name: 'product',
+          name: 'products',
           fields: {
             id: {
               type: new GraphQLNonNull(GraphQLID),
@@ -51,7 +51,7 @@ const OrderType = new GraphQLObjectType({
     payment: {
       type: new GraphQLList(
         new GraphQLObjectType({
-          name: 'payment',
+          name: 'payments',
           fields: {
             transactionID: {
               type: new GraphQLNonNull(GraphQLID),
