@@ -5,7 +5,7 @@ import {
   GraphQLFloat,
   GraphQLID,
 } from 'graphql'
-
+import GraphQLDate from 'graphql-date'
 import Order from '../../database/models/order'
 import OrderType from '../types/OrderType'
 
@@ -39,9 +39,6 @@ const addOrder={
             },
             size: {
               type: new GraphQLNonNull(GraphQLString),
-            },
-            productOrderedAt: {
-              type: new GraphQLNonNull(GraphQLDate),
             },
           },
         })
@@ -138,9 +135,6 @@ const updateOrder = {
             },
             size: {
               type: new GraphQLNonNull(GraphQLString),
-            },
-            productOrderedAt: {
-              type: new GraphQLNonNull(GraphQLDate),
             },
           },
         })
