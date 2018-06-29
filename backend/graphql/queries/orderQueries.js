@@ -2,12 +2,15 @@ import {
   GraphQLList,
   GraphQLID,
   GraphQLInputObjectType,
-  GraphQLString,
+  GraphQLNonNull,
 } from 'graphql'
+import GraphQLDate from 'graphql-date'
 
 import OrderType from '../types/OrderType'
+import OrderByType from '../types/OrderByType'
 import Order from '../../database/models/order'
 
+// Fetch all orders (can be filtered).
 const orders = {
   type: new GraphQLList(OrderType),
   args: {
@@ -16,7 +19,17 @@ const orders = {
         name: 'SortOrdersBy',
         fields: {
           orderedAt: {
-            type: GraphQLString,
+            type: OrderByType,
+          },
+        },
+      }),
+    },
+    filters: {
+      type: new GraphQLInputObjectType({
+        name: 'FilterOrdersBy',
+        fields: {
+          orderedAt: {
+            type: GraphQLDate,
           },
         },
       }),
@@ -24,53 +37,21 @@ const orders = {
   },
   resolve: async (parent, args) => {
     try {
-      const ordersList = await Order.find({}).sort(args.orderBy)
+      const ordersList = await Order.find(args.filters).sort(args.orderBy)
       return ordersList
     } catch (err) {
       console.log('Error occurred in fetching orders: ', err)
+      throw err
     }
   },
 }
 
-// Fetch According to Date On which Product was ordered
-// const Order_Fetch = {
-//   type: new GraphQLList(OrderType),
-//   args: {
-//     orderBy: {
-//       type: new GraphQLInputObjectType({
-//         name: 'OrderedProductSorted',
-//         fields: {
-//           product: {
-//             type: new GraphQLList(
-//               new GraphQLInputObjectType({
-//                 name: 'Products',
-//                 fields: {
-//                   productOrderedAt: {
-//                     type: GraphQLDate,
-//                   },
-//                 },
-//               })
-//             ),
-//           },
-//         },
-//       }),
-//     },
-//   },
-//   resolve: async(parent, args) => {
-//     try{
-//       const orderedProductList= await Order.find({}).sort(args.orderBy)
-//       return orderedProductList
-//     } catch(err) {
-//       console.log('Error occured in fetching products ',err)
-//     }
-//   },
-// }
-
+// Fetch order by ID.
 const order = {
   type: OrderType,
   args: {
     id: {
-      type: GraphQLID,
+      type: new GraphQLNonNull(GraphQLID),
     },
   },
   resolve: async (parent, args) => {
@@ -79,6 +60,7 @@ const order = {
       return orderPlaced
     } catch (err) {
       console.log('Error occurred in fetching order by ID: ', err)
+      throw err
     }
   },
 }
