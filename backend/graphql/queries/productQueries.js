@@ -3,6 +3,7 @@ import {
   GraphQLID,
   GraphQLInputObjectType,
   GraphQLString,
+  GraphQLNonNull,
 } from 'graphql'
 
 import ProductType from '../types/ProductType'
@@ -32,6 +33,7 @@ const products = {
       return productsList
     } catch (err) {
       console.log('Error occurred in fetching products: ', err)
+      throw err
     }
   },
 }
@@ -40,7 +42,7 @@ const product = {
   type: ProductType,
   args: {
     id: {
-      type: GraphQLID,
+      type: new GraphQLNonNull(GraphQLID),
     },
   },
   resolve: async (parent, args) => {
@@ -49,6 +51,7 @@ const product = {
       return dbProduct
     } catch (err) {
       console.log('Error occurred in fetching product by ID: ', err)
+      throw err
     }
   },
 }

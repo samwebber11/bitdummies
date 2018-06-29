@@ -51,6 +51,7 @@ const addProduct = {
       return product
     } catch (err) {
       console.log('Error occurred in adding product: ', err)
+      throw err
     }
   },
 }
@@ -68,6 +69,7 @@ const removeProduct = {
       return removedProduct
     } catch (err) {
       console.log('Error occurred in removing product: ', err)
+      throw err
     }
   },
 }
@@ -130,6 +132,7 @@ const updateProduct = {
       return product
     } catch (err) {
       console.log('Error occurred in updating product: ', err)
+      throw err
     }
   },
 }
