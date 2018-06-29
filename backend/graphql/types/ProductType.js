@@ -8,6 +8,8 @@ import {
   GraphQLList,
 } from 'graphql'
 
+import SizeType from './SizeType'
+
 const ProductType = new GraphQLObjectType({
   name: 'Product',
   fields: () => ({
@@ -21,19 +23,7 @@ const ProductType = new GraphQLObjectType({
       type: GraphQLString,
     },
     size: {
-      type: new GraphQLList(
-        new GraphQLObjectType({
-          name: 'size',
-          fields: {
-            label: {
-              type: GraphQLString,
-            },
-            quantityAvailable: {
-              type: GraphQLInt,
-            },
-          },
-        })
-      ),
+      type: new GraphQLList(SizeType),
     },
     description: {
       type: GraphQLString,

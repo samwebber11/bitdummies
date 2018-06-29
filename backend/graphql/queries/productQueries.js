@@ -7,8 +7,10 @@ import {
 } from 'graphql'
 
 import ProductType from '../types/ProductType'
+import OrderByType from '../types/OrderByType'
 import Product from '../../database/models/product'
 
+// Fetch the list of all products (can be filtered).
 const products = {
   type: new GraphQLList(ProductType),
   args: {
@@ -16,11 +18,23 @@ const products = {
       type: new GraphQLInputObjectType({
         name: 'SortProductsBy',
         fields: {
-          // TODO: Should change it to enum type of 'asc' and 'desc'.
           name: {
-            type: GraphQLString,
+            type: OrderByType,
           },
           actualPrice: {
+            type: OrderByType,
+          },
+          category: {
+            type: OrderByType,
+          },
+        },
+      }),
+    },
+    filters: {
+      type: new GraphQLInputObjectType({
+        name: 'FilterProductsBy',
+        fields: {
+          category: {
             type: GraphQLString,
           },
         },
@@ -29,7 +43,7 @@ const products = {
   },
   resolve: async (parent, args) => {
     try {
-      const productsList = await Product.find({}).sort(args.orderBy)
+      const productsList = await Product.find(args.filters).sort(args.orderBy)
       return productsList
     } catch (err) {
       console.log('Error occurred in fetching products: ', err)
@@ -38,6 +52,7 @@ const products = {
   },
 }
 
+// Fetch product by ID.
 const product = {
   type: ProductType,
   args: {

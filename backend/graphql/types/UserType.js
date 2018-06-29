@@ -7,18 +7,18 @@ import {
 
 import Address from '../../database/models/address'
 import Order from '../../database/models/order'
-import UserInputType from './UserInputType'
+import UserProviderType from './UserProviderType'
 import AddressType from './AddressType'
 import OrderType from './OrderType'
 
 const UserType = new GraphQLObjectType({
-  name: 'Users',
-  fields: {
+  name: 'User',
+  fields: () => ({
     id: {
       type: new GraphQLNonNull(GraphQLID),
     },
     provider: {
-      type: new GraphQLNonNull(UserInputType),
+      type: new GraphQLNonNull(UserProviderType),
     },
     email: {
       type: new GraphQLNonNull(GraphQLString),
@@ -39,7 +39,8 @@ const UserType = new GraphQLObjectType({
           const address = await Address.findById(parent.address)
           return address
         } catch (err) {
-          console.log('Error in fetching address: ', err)
+          console.log('Error in fetching address for the user: ', err)
+          throw err
         }
       },
     },
@@ -50,11 +51,12 @@ const UserType = new GraphQLObjectType({
           const order = await Order.findById(parent.order)
           return order
         } catch (err) {
-          console.log('Error in Fetching Orders for the user: ', err)
+          console.log('Error in fetching orders for the user: ', err)
+          throw err
         }
       },
     },
-  },
+  }),
 })
 
 export default UserType
