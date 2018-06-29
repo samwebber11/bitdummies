@@ -2700,6 +2700,10 @@ mongodb@3.0.9:
   dependencies:
     mongodb-core "3.0.8"
 
+mongoose-float@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/mongoose-float/-/mongoose-float-1.0.2.tgz#895e653e37c29e578f29bff6a40c52a859065419"
+
 mongoose-legacy-pluralize@1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/mongoose-legacy-pluralize/-/mongoose-legacy-pluralize-1.0.2.tgz#3ba9f91fa507b5186d399fb40854bff18fb563e4"
