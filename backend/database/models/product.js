@@ -69,7 +69,9 @@ const ProductSchema = new Schema({
 })
 
 ProductSchema.virtual('discountedPrice').get(function() {
-  return this.actualPrice - (this.actualPrice * this.discount) / 100
+  const discountedPrice =
+    this.actualPrice - (this.actualPrice * this.discount) / 100
+  return discountedPrice.toFixed(2)
 })
 
 const Product = mongoose.model('Product', ProductSchema)
