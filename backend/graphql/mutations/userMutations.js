@@ -1,14 +1,14 @@
 import { GraphQLNonNull, GraphQLString, GraphQLID } from 'graphql'
 
 import UserType from '../types/UserType'
-import UserInputType from '../types/UserInputType'
+import UserProviderInputType from '../types/UserProviderInputType'
 import User from '../../database/models/user'
 
 const addUser = {
   type: UserType,
   args: {
     provider: {
-      type: new GraphQLNonNull(UserInputType),
+      type: new GraphQLNonNull(UserProviderInputType),
     },
     email: {
       type: new GraphQLNonNull(GraphQLString),
@@ -64,7 +64,7 @@ const updateUser = {
       type: new GraphQLNonNull(GraphQLID),
     },
     provider: {
-      type: new GraphQLNonNull(UserInputType),
+      type: new GraphQLNonNull(UserProviderInputType),
     },
     email: {
       type: new GraphQLNonNull(GraphQLString),
@@ -100,7 +100,7 @@ const updateUser = {
       )
       return user
     } catch (err) {
-      console.log('Error occured in updating user: ', id)
+      console.log('Error occured in updating user: ', args.id)
     }
   },
 }

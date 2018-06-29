@@ -30,6 +30,7 @@ const addAddress = {
     },
   },
   resolve: async (parent, args, context) => {
+    console.log(context)
     // TODO: Get user from the context and the user ID. Temporary solution given below.
     const userId = '5b34e3d5914e3aa7a1114139' // This ID is a valid ID but not a valid userID. Find some other solution for it.
     try {
