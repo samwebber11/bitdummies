@@ -7,7 +7,7 @@ import {
   GraphQLInt,
   GraphQLFloat,
 } from 'graphql'
-import { GraphQLDate } from 'graphql-date'
+import GraphQLDate from 'graphql-date'
 
 import Product from '../../database/models/product'
 import Address from '../../database/models/address'
@@ -22,47 +22,51 @@ const OrderType = new GraphQLObjectType({
       type: new GraphQLNonNull(GraphQLID),
     },
     products: {
-      type: new GraphQLList(
-        new GraphQLObjectType({
-          name: 'ProductBought',
-          fields: () => ({
-            product: {
-              type: ProductType,
-              resolve: async (parent, args) => {
-                try {
-                  const product = await Product.findById(
-                    parent.product,
-                    'name category description imagePath delicacy'
-                  )
-                  return product
-                } catch (err) {
-                  console.log(
-                    'Error in fetching product details in order: ',
-                    err
-                  )
-                }
-              },
-            },
-            size: {
-              type: new GraphQLNonNull(GraphQLString),
-            },
-            quantity: {
-              type: new GraphQLNonNull(GraphQLInt),
-            },
-            actualPrice: {
-              type: new GraphQLNonNull(GraphQLFloat),
-            },
-            discount: {
-              type: new GraphQLNonNull(GraphQLInt),
-            },
-            discountedPrice: {
-              type: new GraphQLNonNull(GraphQLFloat),
-            },
-            tax: {
-              type: new GraphQLNonNull(GraphQLFloat),
-            },
-          }),
-        })
+      type: new GraphQLNonNull(
+        new GraphQLList(
+          new GraphQLNonNull(
+            new GraphQLObjectType({
+              name: 'ProductBought',
+              fields: () => ({
+                product: {
+                  type: ProductType,
+                  resolve: async (parent, args) => {
+                    try {
+                      const product = await Product.findById(
+                        parent.product,
+                        'name category description imagePath delicacy'
+                      )
+                      return product
+                    } catch (err) {
+                      console.log(
+                        'Error in fetching product details in order: ',
+                        err
+                      )
+                    }
+                  },
+                },
+                size: {
+                  type: new GraphQLNonNull(GraphQLString),
+                },
+                quantity: {
+                  type: new GraphQLNonNull(GraphQLInt),
+                },
+                actualPrice: {
+                  type: new GraphQLNonNull(GraphQLFloat),
+                },
+                discount: {
+                  type: new GraphQLNonNull(GraphQLInt),
+                },
+                discountedPrice: {
+                  type: new GraphQLNonNull(GraphQLFloat),
+                },
+                tax: {
+                  type: new GraphQLNonNull(GraphQLFloat),
+                },
+              }),
+            })
+          )
+        )
       ),
     },
     status: {
@@ -83,7 +87,7 @@ const OrderType = new GraphQLObjectType({
       },
     },
     orderedAt: {
-      type: GraphQLDate,
+      type: new GraphQLNonNull(GraphQLDate),
     },
   }),
 })

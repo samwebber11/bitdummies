@@ -55,14 +55,14 @@ const OrderSchema = new Schema({
     status: {
       type: String,
       required: true,
-      enum: ['unpaid', 'processing', 'paid', 'failed'],
-      default: 'unpaid',
+      enum: ['Unpaid', 'Processing', 'Paid', 'Failed'],
+      default: 'Unpaid',
     },
     mode: {
       type: String,
       required: true,
-      enum: ['E-wallet', 'Cash on Delivery', 'Credit/Debit card', 'none'],
-      default: 'none',
+      enum: ['E-wallet', 'Cash on Delivery', 'Credit/Debit card', 'None'],
+      default: 'None',
     },
     transactionID: {
       type: String,

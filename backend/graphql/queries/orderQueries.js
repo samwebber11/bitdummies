@@ -3,6 +3,7 @@ import {
   GraphQLID,
   GraphQLInputObjectType,
   GraphQLString,
+  GraphQLNonNull,
 } from 'graphql'
 
 import OrderType from '../types/OrderType'
@@ -28,6 +29,7 @@ const orders = {
       return ordersList
     } catch (err) {
       console.log('Error occurred in fetching orders: ', err)
+      throw err
     }
   },
 }
@@ -70,7 +72,7 @@ const order = {
   type: OrderType,
   args: {
     id: {
-      type: GraphQLID,
+      type: new GraphQLNonNull(GraphQLID),
     },
   },
   resolve: async (parent, args) => {
@@ -79,6 +81,7 @@ const order = {
       return orderPlaced
     } catch (err) {
       console.log('Error occurred in fetching order by ID: ', err)
+      throw err
     }
   },
 }

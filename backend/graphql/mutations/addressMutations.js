@@ -35,6 +35,7 @@ const addAddress = {
       return address
     } catch (err) {
       console.log('Error occurred in adding address: ', err)
+      throw err
     }
   },
 }
@@ -52,6 +53,7 @@ const removeAddress = {
       return address
     } catch (err) {
       console.log('Error occurred in removing address: ', err)
+      throw err
     }
   },
 }
@@ -59,6 +61,9 @@ const removeAddress = {
 const updateAddress = {
   type: AddressType,
   args: {
+    id: {
+      type: new GraphQLNonNull(GraphQLID),
+    },
     address1: {
       type: new GraphQLNonNull(GraphQLString),
     },
@@ -101,6 +106,7 @@ const updateAddress = {
       return address
     } catch (err) {
       console.log('Error occurred in updating address: ', err)
+      throw err
     }
   },
 }

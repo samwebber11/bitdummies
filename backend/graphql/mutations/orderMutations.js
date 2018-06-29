@@ -10,7 +10,9 @@ const addOrder = {
   type: OrderType,
   args: {
     products: {
-      type: new GraphQLNonNull(new GraphQLList(ProductOrderedType)),
+      type: new GraphQLNonNull(
+        new GraphQLList(new GraphQLNonNull(ProductOrderedType))
+      ),
     },
     status: {
       type: new GraphQLNonNull(GraphQLString),
@@ -32,6 +34,7 @@ const addOrder = {
       return order
     } catch (err) {
       console.log('Error occurred in saving order: ', err)
+      throw err
     }
   },
 }
@@ -49,6 +52,7 @@ const cancelOrder = {
       return cancelledOrder
     } catch (err) {
       console.log('Error occurred in cancelling order: ', err)
+      throw err
     }
   },
 }
@@ -60,7 +64,9 @@ const updateOrder = {
       type: new GraphQLNonNull(GraphQLID),
     },
     products: {
-      type: new GraphQLNonNull(new GraphQLList(ProductOrderedType)),
+      type: new GraphQLNonNull(
+        new GraphQLList(new GraphQLNonNull(ProductOrderedType))
+      ),
     },
     status: {
       type: new GraphQLNonNull(GraphQLString),
@@ -71,28 +77,14 @@ const updateOrder = {
     shippingAddress: {
       type: new GraphQLNonNull(GraphQLID),
     },
-    orderedAt: {
-      type: new GraphQLNonNull(GraphQLDate),
-    },
   },
   resolve: async (parent, args) => {
     try {
-      const order = await Order.findByIdAndUpdate(
-        args.id,
-        {
-          $set: {
-            products: args.products,
-            status: args.status,
-            payment: args.payment,
-            shippingAddress: args.shippingAddress,
-            orderedAt: args.orderedAt,
-          },
-        },
-        { new: true }
-      )
+      const order = await Order.findByIdAndUpdate(args.id, args, { new: true })
       return order
     } catch (err) {
       console.log('Error occurred in updating order: ', err)
+      throw err
     }
   },
 }
