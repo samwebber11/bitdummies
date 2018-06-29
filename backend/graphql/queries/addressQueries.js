@@ -7,8 +7,55 @@ import {
 } from 'graphql'
 
 import AddressType from '../types/AddressType'
+import OrderByType from '../types/OrderByType'
 import Address from '../../database/models/address'
 
+// Fetch all addresses (can be filtered).
+const addresses = {
+  type: new GraphQLList(AddressType),
+  args: {
+    orderBy: {
+      type: new GraphQLInputObjectType({
+        name: 'SortAddressBy',
+        fields: {
+          country: {
+            type: OrderByType,
+          },
+        },
+      }),
+    },
+    filters: {
+      type: new GraphQLInputObjectType({
+        name: 'FilterAddressesBy',
+        fields: {
+          city: {
+            type: GraphQLString,
+          },
+          state: {
+            type: GraphQLString,
+          },
+          zip: {
+            type: GraphQLString,
+          },
+          country: {
+            type: GraphQLString,
+          },
+        },
+      }),
+    },
+  },
+  resolve: async (parent, args) => {
+    try {
+      const addressesList = await Address.find(args.filters).sort(args.orderBy)
+      return addressesList
+    } catch (err) {
+      console.log('Error occurred in fetching addresses: ', err)
+      throw err
+    }
+  },
+}
+
+// Fetch address by its ID.
 const address = {
   type: AddressType,
   args: {
@@ -19,35 +66,12 @@ const address = {
   resolve: async (parent, args) => {
     try {
       const addressStored = await Address.findById(args.id)
-      console.log(addressStored)
       return addressStored
     } catch (err) {
       console.log('Error occurred in fetching address by ID: ', err)
+      throw err
     }
   },
 }
 
-const addresses = {
-  type: new GraphQLList(AddressType),
-  args: {
-    orderBy: {
-      type: new GraphQLInputObjectType({
-        name: 'SortAddress',
-        fields: {
-          country: {
-            type: GraphQLString,
-          },
-        },
-      }),
-    },
-  },
-  resolve: async (parent, args) => {
-    try {
-      const addressList = await Address.find({}).sort(args.orderBy)
-      return addressList
-    } catch (err) {
-      console.log('Error occurred in fetching products: ', err)
-    }
-  },
-}
 export { address, addresses }

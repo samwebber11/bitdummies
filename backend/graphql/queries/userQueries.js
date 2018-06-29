@@ -3,43 +3,50 @@ import {
   GraphQLID,
   GraphQLInputObjectType,
   GraphQLString,
-  GraphQLObjectType,
+  GraphQLNonNull,
 } from 'graphql'
 
 import UserType from '../types/UserType'
+import OrderByType from '../types/OrderByType'
 import User from '../../database/models/user'
 
+// Fetch the list of all users (can be filtered).
 const users = {
-  type: UserType,
-  args: {
-    id: {
-      type: GraphQLID,
-    },
-  },
-  resolve: async (parent, args) => {
-    try {
-      const userStored = await User.findById(args.id)
-      return userStored
-    } catch (err) {
-      console.log('Error Occured in fetching Users: ', err)
-    }
-  },
-}
-
-const user = {
   type: new GraphQLList(UserType),
   args: {
     orderBy: {
       type: new GraphQLInputObjectType({
-        name: 'SortUsers',
+        name: 'SortUsersBy',
         fields: {
+          firstName: {
+            type: OrderByType,
+          },
+          lastName: {
+            type: OrderByType,
+          },
+          name: {
+            type: OrderByType,
+          },
+        },
+      }),
+    },
+    filters: {
+      type: new GraphQLInputObjectType({
+        name: 'FilterUsersBy',
+        fields: {
+          'provider.name': {
+            type: GraphQLString,
+          },
+          email: {
+            type: GraphQLString,
+          },
           firstName: {
             type: GraphQLString,
           },
           lastName: {
             type: GraphQLString,
           },
-          name: {
+          phone: {
             type: GraphQLString,
           },
         },
@@ -48,10 +55,30 @@ const user = {
   },
   resolve: async (parent, args) => {
     try {
-      const userList = await User.find({}).sort(args.orderBy)
+      const userList = await User.find(args.filters).sort(args.orderBy)
       return userList
     } catch (err) {
-      console.log('Error occured in fetching ordered users: ', err)
+      console.log('Error occurred in fetching users: ', err)
+      throw err
+    }
+  },
+}
+
+// Fetch a user either by ID.
+const user = {
+  type: UserType,
+  args: {
+    id: {
+      type: new GraphQLNonNull(GraphQLID),
+    },
+  },
+  resolve: async (parent, args) => {
+    try {
+      const userStored = await User.findById(args.id)
+      return userStored
+    } catch (err) {
+      console.log('Error Occured in fetching user by ID: ', err)
+      throw err
     }
   },
 }
