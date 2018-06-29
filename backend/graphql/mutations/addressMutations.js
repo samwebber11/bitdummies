@@ -1,6 +1,7 @@
 import { GraphQLNonNull, GraphQLString, GraphQLID } from 'graphql'
 
 import Address from '../../database/models/address'
+import User from '../../database/models/user'
 import AddressType from '../types/AddressType'
 
 const addAddress = {
@@ -28,10 +29,30 @@ const addAddress = {
       type: new GraphQLNonNull(GraphQLString),
     },
   },
-  resolve: async (parent, args) => {
+  resolve: async (parent, args, context) => {
+    // TODO: Get user from the context and the user ID. Temporary solution given below.
+    const userId = '5b34e3d5914e3aa7a1114139' // This ID is a valid ID but not a valid userID. Find some other solution for it.
     try {
+      // Find out if the user exists.
+      let user = await User.findById(userId) // Replace userId with ID from context.
+      if (!user) {
+        throw new Error('Could not find user')
+      }
+
+      // If user exists, save the address to the database.
       let address = new Address(args)
       address = await address.save()
+      if (!address) {
+        throw new Error('Error occurred in saving address')
+      }
+
+      // Then add the address ID to the list of addresses for the current user.
+      const addresses = [...user.address, address._id]
+      user = await User.findByIdAndUpdate(user._id, { address: addresses })
+      if (!user) {
+        throw new Error('Could not update address in User model')
+      }
+
       return address
     } catch (err) {
       console.log('Error occurred in adding address: ', err)
