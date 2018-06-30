@@ -41,7 +41,7 @@ const products = {
       }),
     },
   },
-  resolve: async (parent, args) => {
+  resolve: async (parent, args, { user }) => {
     try {
       const productsList = await Product.find(args.filters).sort(args.orderBy)
       return productsList
@@ -60,7 +60,7 @@ const product = {
       type: new GraphQLNonNull(GraphQLID),
     },
   },
-  resolve: async (parent, args) => {
+  resolve: async (parent, args, { user }) => {
     try {
       const dbProduct = await Product.findById(args.id)
       return dbProduct
