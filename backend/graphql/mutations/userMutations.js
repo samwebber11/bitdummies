@@ -88,7 +88,7 @@ const updateUser = {
         args.id,
         {
           $set: {
-            provider: args.providers,
+            provider: args.provider,
             email: args.email,
             firstName: args.firstName,
             lastName: args.lastName,
