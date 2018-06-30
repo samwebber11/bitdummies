@@ -43,7 +43,7 @@ const addAddress = {
         }
         // If user exists, save the address to the database.
         const addressIds = user.map(address => address.address)
-        if (addressIds.length === 2) {
+        if (addressIds.length === 3) {
           throw new Error('Error saving more address')
         }
         let address = new Address(args)
@@ -81,7 +81,7 @@ const removeAddress = {
   resolve: async (parent, args, context) => {
     if (context.user) {
       const userId = context.user._id
-
+    }
       try {
         const user = User.findById(userId)
         if (!user) {
@@ -96,14 +96,24 @@ const removeAddress = {
             'Could not find any address associated with the current user'
           )
         }
+        // TODO: Check if this functions works right away
+        const id = args.id.valueOf()
         const remove_address = await Address.findByIdAndRemove(args.id)
+        if (!remove_address) {
+          throw new Error('Error occured in removing address')
+        }
+        user = await User.findByIdAndUpdate(userId, {
+          address: addressIds.splice(addressIds.indexOf(id), 1),
+        })
+        // const dbAddress = await User.find((args.id: { $in: addressIds }))
+
+
+
         return remove_address
       } catch (err) {
         console.log('Error occured in removing address: ', err)
         throw new Error(err)
       }
-    } else {
-      throw new Error('No user found')
     }
   },
 }
@@ -137,6 +147,10 @@ const updateAddress = {
     },
   },
   resolve: async (parent, args) => {
+    if (context.user) {
+      const userId = context.user._id
+
+    }
     try {
       const address = await Address.findByIdAndUpdate(
         args.id,
