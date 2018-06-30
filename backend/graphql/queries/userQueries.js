@@ -34,8 +34,15 @@ const users = {
       type: new GraphQLInputObjectType({
         name: 'FilterUsersBy',
         fields: {
-          'provider.name': {
-            type: GraphQLString,
+          provider: {
+            type: new GraphQLInputObjectType({
+              name: 'FilterUsersByProvider',
+              fields: {
+                name: {
+                  type: GraphQLString,
+                },
+              },
+            }),
           },
           email: {
             type: GraphQLString,
