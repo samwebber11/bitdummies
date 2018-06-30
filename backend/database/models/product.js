@@ -4,6 +4,10 @@ import float from 'mongoose-float'
 const { Schema } = mongoose
 
 const ProductSchema = new Schema({
+  name: {
+    type: String,
+    required: true,
+  },
   category: {
     type: String,
     required: true,
@@ -61,10 +65,6 @@ const ProductSchema = new Schema({
     required: true,
     enum: ['low', 'medium', 'high'],
     default: 'high',
-  },
-  name: {
-    type: String,
-    required: true,
   },
 })
 

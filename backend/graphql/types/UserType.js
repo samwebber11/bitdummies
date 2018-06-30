@@ -3,6 +3,7 @@ import {
   GraphQLString,
   GraphQLNonNull,
   GraphQLID,
+  GraphQLList,
 } from 'graphql'
 
 import Address from '../../database/models/address'
@@ -33,23 +34,25 @@ const UserType = new GraphQLObjectType({
       type: GraphQLString,
     },
     address: {
-      type: AddressType,
+      type: new GraphQLList(AddressType),
       resolve: async (parent, args) => {
         try {
-          const address = await Address.findById(parent.address)
-          return address
+          const addressList = await Address.find({
+            _id: { $in: parent.address },
+          })
+          return addressList
         } catch (err) {
-          console.log('Error in fetching address for the user: ', err)
+          console.log('Error in fetching addressList for the user: ', err)
           throw err
         }
       },
     },
     order: {
-      type: OrderType,
+      type: new GraphQLList(OrderType),
       resolve: async (parent, args) => {
         try {
-          const order = await Order.findById(parent.order)
-          return order
+          const ordersList = await Order.find({ _id: { $in: parent.order } })
+          return ordersList
         } catch (err) {
           console.log('Error in fetching orders for the user: ', err)
           throw err

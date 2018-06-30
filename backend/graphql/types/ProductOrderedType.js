@@ -13,7 +13,7 @@ const ProductOrderedType = new GraphQLObjectType({
   name: 'ProductOrdered',
   fields: () => ({
     product: {
-      type: ProductType,
+      type: new GraphQLNonNull(ProductType),
       resolve: async (parent, args) => {
         try {
           const product = await Product.findById(
