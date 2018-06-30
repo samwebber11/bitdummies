@@ -1,7 +1,8 @@
 /* eslint-env jest */
 
 import { GraphQLNonNull, GraphQLID, GraphQLString } from 'graphql'
-import AddressType from '../graphql/types/AddressType'
+
+import AddressType from '../../graphql/types/AddressType'
 
 describe('Address', () => {
   it('Should have a non-nullable id field of type ID', () => {
