@@ -1,13 +1,18 @@
-import { GraphQLObjectType, GraphQLString, GraphQLInt } from 'graphql'
+import {
+  GraphQLObjectType,
+  GraphQLNonNull,
+  GraphQLString,
+  GraphQLInt,
+} from 'graphql'
 
 const SizeType = new GraphQLObjectType({
   name: 'Size',
   fields: {
     label: {
-      type: GraphQLString,
+      type: new GraphQLNonNull(GraphQLString),
     },
     quantityAvailable: {
-      type: GraphQLInt,
+      type: new GraphQLNonNull(GraphQLInt),
     },
   },
 })
