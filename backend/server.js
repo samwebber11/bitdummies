@@ -22,7 +22,7 @@ const app = express()
 const PORT = process.env.PORT || 3001
 
 // Middleware.
-app.use('*', cors())
+app.use(cors({ origin: 'http://localhost:3000', credentials: true }))
 app.use(logger('dev'))
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
@@ -37,20 +37,20 @@ app.use(
 // Serving static files/images.
 app.use('/static', express.static(path.join(__dirname, 'public')))
 
-// GraphQl ServerSetUp
-app.use(
-  '/graphql',
-  cors(),
-  graphqlHTTP({
-    schema,
-    rootValue: global,
-    graphiql: true,
-  })
-)
-
 // Initialize Passport.
 app.use(passport.initialize())
 app.use(passport.session())
+
+// GraphQl Server Setup.
+app.use(
+  '/graphql',
+  graphqlHTTP((req, res) => ({
+    schema,
+    rootValue: global,
+    graphiql: true,
+    context: { user: req.user },
+  }))
+)
 
 // Routes.
 app.use('/', router)
