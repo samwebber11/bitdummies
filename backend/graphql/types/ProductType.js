@@ -17,34 +17,36 @@ const ProductType = new GraphQLObjectType({
       type: new GraphQLNonNull(GraphQLID),
     },
     name: {
-      type: GraphQLString,
+      type: new GraphQLNonNull(GraphQLString),
     },
     category: {
-      type: GraphQLString,
+      type: new GraphQLNonNull(GraphQLString),
     },
     size: {
-      type: new GraphQLList(SizeType),
+      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(SizeType))),
     },
     description: {
-      type: GraphQLString,
+      type: new GraphQLNonNull(GraphQLString),
     },
     actualPrice: {
-      type: GraphQLFloat,
+      type: new GraphQLNonNull(GraphQLFloat),
     },
     discount: {
-      type: GraphQLInt,
+      type: new GraphQLNonNull(GraphQLInt),
     },
     discountedPrice: {
-      type: GraphQLFloat,
+      type: new GraphQLNonNull(GraphQLFloat),
     },
     tax: {
-      type: GraphQLFloat,
+      type: new GraphQLNonNull(GraphQLFloat),
     },
     imagePath: {
-      type: new GraphQLList(GraphQLString),
+      type: new GraphQLNonNull(
+        new GraphQLList(new GraphQLNonNull(GraphQLString))
+      ),
     },
     delicacy: {
-      type: GraphQLString,
+      type: new GraphQLNonNull(GraphQLString),
     },
   }),
 })

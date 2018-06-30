@@ -14,7 +14,7 @@ describe('Order', () => {
     expect(OrderType.getFields().id.type).toEqual(new GraphQLNonNull(GraphQLID))
   })
 
-  it('Should have a non-nullable products field of type ProductOrdered', () => {
+  it('Should have a non-nullable products field of type list(ProductOrdered)', () => {
     expect(OrderType.getFields()).toHaveProperty('products')
     expect(OrderType.getFields().products.type).toEqual(
       new GraphQLNonNull(
