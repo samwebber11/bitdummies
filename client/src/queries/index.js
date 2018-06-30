@@ -37,7 +37,7 @@ const fetchProducts = gql`
 `
 
 const getProductDetails = gql`
-  query($id: ID) {
+  query($id: ID!) {
     product(id: $id) {
       id
       name
