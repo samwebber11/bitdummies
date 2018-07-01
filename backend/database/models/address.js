@@ -38,5 +38,7 @@ const AddressSchema = new Schema({
   },
 })
 
-const Address = mongoose.model('Address', AddressSchema)
+const skipInit = process.env.NODE_ENV === 'test'
+
+const Address = mongoose.model('Address', AddressSchema, 'addresses', skipInit)
 export default Address

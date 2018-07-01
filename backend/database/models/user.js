@@ -54,5 +54,7 @@ const UserSchema = new Schema({
 
 UserSchema.virtual('name').get(() => `${this.firstName} ${this.lastName}`)
 
-const User = mongoose.model('User', UserSchema)
+const skipInit = process.env.NODE_ENV === 'test'
+
+const User = mongoose.model('User', UserSchema, 'users', skipInit)
 export default User
