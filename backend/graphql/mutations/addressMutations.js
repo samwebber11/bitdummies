@@ -3,6 +3,7 @@ import { GraphQLNonNull, GraphQLString, GraphQLID } from 'graphql'
 import Address from '../../database/models/address'
 import User from '../../database/models/user'
 import AddressType from '../types/AddressType'
+import { forEach } from 'iterall'
 
 const addAddress = {
   type: AddressType,
@@ -95,6 +96,18 @@ const removeAddress = {
             'Could not find any address associated with the current user'
           )
         }
+        addressIds.forEach(async address => {
+          if (user.order.shippingAddress._id === address) {
+            if (
+              user.order.status === 'Delivered' ||
+              user.order.status === 'On Its Way' ||
+              user.order.status === 'Delivered'
+            ) {
+              throw new Error('Cannot remove address')
+            }
+          }
+        })
+
         // TODO: Check if this functions works right away
         const id = args.id.valueOf()
         const removeaddress = await Address.findByIdAndRemove(args.id)
