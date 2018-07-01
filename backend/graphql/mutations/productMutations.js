@@ -45,9 +45,17 @@ const addProduct = {
     },
   },
   resolve: async (parent, args) => {
+    // this code will be required when we will assign any admin to the whole system and that will be
+    // authenticated and when he/she will be logged in this should work.
+    // if(user.context)
+    // {
+    //   const userId = user.context._id
+    // }
     try {
-      let product = new Product(args)
-      product = await product.save()
+      const product = new Product(args)
+      if (product.size.quantityAvailable !== 0 && product.imagePath !== null) {
+        product = await product.save()
+      }
       return product
     } catch (err) {
       console.log('Error occurred in adding product: ', err)
