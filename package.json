@@ -45,13 +45,13 @@
     "validator": "^10.3.0"
   },
   "jest": {
-    "testRegex": ".*/test/.*.js"
+    "testRegex": ".*/test/.*.test.js"
   },
   "scripts": {
     "start:server": "cd backend && nodemon server.js --exec babel-node --presets env",
     "start:client": "cd client && yarn start",
     "start:dev": "concurrently \"yarn start:server\" \"yarn start:client\"",
-    "test": "jest",
-    "testwatch": "jest --watchAll"
+    "test": "NODE_ENV=test jest --detectOpenHandles --forceExit",
+    "testwatch": "NODE_ENV=test jest --watchAll"
   }
 }
