@@ -3,6 +3,8 @@ import { isEmail, isMobilePhone } from 'validator'
 
 const { Schema } = mongoose
 
+const addressLimit = arr => arr.length <= 5
+
 const UserSchema = new Schema({
   provider: {
     name: {
@@ -38,12 +40,15 @@ const UserSchema = new Schema({
     type: String,
     validate: [isMobilePhone, 'Invalid phone'],
   },
-  address: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'Address',
-    },
-  ],
+  address: {
+    type: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Address',
+      },
+    ],
+    validate: [addressLimit, 'Cannot have more than 5 addresses'],
+  },
   order: [
     {
       type: Schema.Types.ObjectId,

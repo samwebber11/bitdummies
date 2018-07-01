@@ -4,7 +4,10 @@ import Address from '../../database/models/address'
 import User from '../../database/models/user'
 import AddressType from '../types/AddressType'
 
-import { addAddressResolver } from '../resolvers/addressResolvers'
+import {
+  addAddressResolver,
+  removeAddressResolver,
+} from '../resolvers/addressResolvers'
 
 const addAddress = {
   type: AddressType,
@@ -41,53 +44,7 @@ const removeAddress = {
       type: new GraphQLNonNull(GraphQLID),
     },
   },
-  resolve: async (parent, args, context) => {
-    if (context.user) {
-      const userId = context.user._id
-      try {
-        let user = User.findById(userId)
-        if (!user) {
-          throw new Error('Could not find user')
-        }
-        // Mapping all the addressIds associated with a particular user to have a check if there
-        // is any address associated with the user. If no address is found then an error occurs otherwise
-        // check the following address in the list of addresses.
-        const addressIds = user.map(address => address.address)
-        if (addressIds.length === 0) {
-          throw new Error(
-            'Could not find any address associated with the current user'
-          )
-        }
-        addressIds.forEach(async address => {
-          if (user.order.shippingAddress._id === address) {
-            if (
-              user.order.status === 'Delivered' ||
-              user.order.status === 'On Its Way' ||
-              user.order.status === 'Delivered'
-            ) {
-              throw new Error('Cannot remove address')
-            }
-          }
-        })
-
-        // TODO: Check if this functions works right away
-        const id = args.id.valueOf()
-        const removeaddress = await Address.findByIdAndRemove(args.id)
-        if (!removeaddress) {
-          throw new Error('Error occured in removing address')
-        }
-        user = await User.findByIdAndUpdate(userId, {
-          address: addressIds.splice(addressIds.indexOf(id), 1),
-        })
-        // const dbAddress = await User.find((args.id: { $in: addressIds }))
-
-        return removeaddress
-      } catch (err) {
-        console.log('Error occured in removing address: ', err)
-        throw err
-      }
-    }
-  },
+  resolve: removeAddressResolver,
 }
 
 const updateAddress = {
