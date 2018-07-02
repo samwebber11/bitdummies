@@ -1,9 +1,10 @@
-import mongoose from 'mongoose'
+import mongoose, { ValidationError } from 'mongoose'
 import { isEmail, isMobilePhone } from 'validator'
 
 const { Schema } = mongoose
 
 const addressLimit = arr => arr.length <= 5
+const checkMobilePhone = phone => isMobilePhone(phone.toString(), 'any')
 
 const UserSchema = new Schema({
   provider: {
@@ -38,7 +39,7 @@ const UserSchema = new Schema({
   },
   phone: {
     type: String,
-    validate: [isMobilePhone, 'Invalid phone'],
+    validate: [checkMobilePhone, 'Invalid phone'],
   },
   address: {
     type: [
@@ -57,7 +58,26 @@ const UserSchema = new Schema({
   ],
 })
 
-UserSchema.virtual('name').get(() => `${this.firstName} ${this.lastName}`)
+UserSchema.virtual('name').get(function() {
+  return `${this.firstName} ${this.lastName}`
+})
+
+UserSchema.pre('findOneAndUpdate', function(next) {
+  const { phone, email } = this.getUpdate()
+  if (phone) {
+    if (!checkMobilePhone(phone)) {
+      throw new ValidationError('Invalid phone')
+    }
+  }
+
+  if (email) {
+    if (!isEmail(email.toString())) {
+      throw new ValidationError('Invalid email')
+    }
+  }
+
+  next()
+})
 
 const skipInit = process.env.NODE_ENV === 'test'
 

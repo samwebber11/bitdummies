@@ -44,10 +44,11 @@ const updateUserResolver = async (parent, args, context) => {
   }
 
   try {
-    return await User.findByIdAndUpdate(user._id, args, {
+    const updatedUser = await User.findOneAndUpdate(user._id, args, {
       new: true,
       runValidators: true,
     })
+    return updatedUser
   } catch (err) {
     throw err
   }
