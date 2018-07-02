@@ -1,9 +1,14 @@
 /* eslint-env jest */
 
-import { ValidationError } from 'mongoose'
+import { ValidationError, Types } from 'mongoose'
 
+import Address from '../../database/models/address'
+import Order from '../../database/models/order'
 import User from '../../database/models/user'
-import { addAddressResolver } from '../../graphql/resolvers/addressResolvers'
+import {
+  addAddressResolver,
+  removeAddressResolver,
+} from '../../graphql/resolvers/addressResolvers'
 import { connectMongoose, disconnectMongoose } from '../helper'
 
 beforeAll(connectMongoose)
@@ -79,6 +84,7 @@ describe('addAddress resolver', () => {
   })
 
   it('Should not add an address when 5 addresses already exist for a particular user', async () => {
+    expect.assertions(9)
     const savedUser = await User.findById(user._id)
 
     // A test above has already added an address.
@@ -94,5 +100,113 @@ describe('addAddress resolver', () => {
     await expect(
       addAddressResolver(null, dummyAddress, { user: savedUser })
     ).rejects.toThrowError(ValidationError)
+  })
+})
+
+describe('removeAddress resolver', () => {
+  const user = {
+    _id: '5b38fc019a3cb32bfc9d456c',
+  }
+
+  it(`Should delete an address from user's list of addresses`, async () => {
+    expect.assertions(1)
+    const savedUser = await User.findById(user._id).populate('address')
+    const addressIndex = Math.floor(Math.random() * savedUser.address.length)
+    const updatedAddresses = await removeAddressResolver(
+      null,
+      { id: savedUser.address[addressIndex]._id },
+      { user: savedUser }
+    )
+
+    expect(updatedAddresses).not.toContain(savedUser.address[addressIndex])
+  })
+
+  it('Should not delete an address when there is no user', async () => {
+    expect.assertions(1)
+    const savedUser = await User.findById(user._id)
+    const addressIndex = Math.floor(Math.random() * savedUser.address.length)
+    await expect(
+      removeAddressResolver(
+        null,
+        { id: savedUser.address[addressIndex]._id },
+        {}
+      )
+    ).rejects.toThrow('Must be logged in')
+  })
+
+  it(`Should not delete an address when the address is not in user's list of addresses`, async () => {
+    expect.assertions(1)
+    const savedUser = await User.findById(user._id)
+    await expect(
+      removeAddressResolver(
+        null,
+        { id: new Types.ObjectId() },
+        { user: savedUser }
+      )
+    ).rejects.toThrow('Unauthorized to delete this address')
+  })
+
+  it(`Should delete an address only from user's list of addresses when an order by the user contains this address`, async () => {
+    expect.assertions(3)
+    const savedUser = await User.findById(user._id).populate('address')
+    const addressIndex = Math.floor(Math.random() * savedUser.address.length)
+    const order = await new Order({
+      products: [
+        {
+          product: new Types.ObjectId(),
+          quantity: 1,
+          actualPrice: 573.76,
+          tax: 10,
+          discount: 10,
+          size: 'S',
+        },
+      ],
+      status: 'Processing',
+      payment: {
+        status: 'Paid',
+        mode: 'E-wallet',
+        transactionID: Math.floor(Math.random() * 10000000 + 1).toString(),
+      },
+      shippingAddress: savedUser.address[addressIndex]._id,
+      orderedAt: Date.now(),
+    }).save()
+    savedUser.order.push(order._id)
+    const updatedUser = await savedUser.save()
+
+    const updatedAddresses = await removeAddressResolver(
+      null,
+      { id: updatedUser.address[addressIndex]._id },
+      { user: updatedUser }
+    )
+
+    const address = await Address.findById(savedUser.address[addressIndex]._id)
+
+    expect(updatedAddresses).not.toContain(savedUser.address[addressIndex])
+    expect(address).toHaveProperty('_id')
+    expect(address._id).toEqual(savedUser.address[addressIndex]._id)
+
+    // Cleanup
+    await Address.findByIdAndRemove(order.shippingAddress)
+    await Order.findByIdAndRemove(order._id)
+    const updatedOrders = updatedUser.order.filter(
+      currentOrder => currentOrder.toString() !== order._id.toString()
+    )
+    await User.findByIdAndUpdate(updatedUser._id, { order: updatedOrders })
+  })
+
+  it(`Should remove all addresses from the user's list of addresses`, async () => {
+    expect.assertions(3)
+    // At this point, only user's list of addresses should have three addresses.
+    const savedUser = await User.findById(user._id).populate('address')
+
+    for (let i = 0; i < savedUser.address.length; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      const updatedAddresses = await removeAddressResolver(
+        null,
+        { id: savedUser.address[i]._id },
+        { user: savedUser }
+      )
+      expect(updatedAddresses).not.toContain(savedUser.address[i])
+    }
   })
 })
