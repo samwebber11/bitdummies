@@ -1,7 +1,6 @@
-import { GraphQLNonNull, GraphQLString, GraphQLID } from 'graphql'
+import { GraphQLNonNull, GraphQLString, GraphQLID, GraphQLList } from 'graphql'
 
 import AddressType from '../types/AddressType'
-
 import {
   addAddressResolver,
   removeAddressResolver,
@@ -37,7 +36,7 @@ const addAddress = {
 }
 
 const removeAddress = {
-  type: AddressType,
+  type: new GraphQLList(AddressType),
   args: {
     id: {
       type: new GraphQLNonNull(GraphQLID),

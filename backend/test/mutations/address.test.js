@@ -182,6 +182,22 @@ describe('updateAddress resolver', () => {
     ).rejects.toThrow('Unauthorized to update this address')
   })
 
+  it('Should not update an address when a field is invalid', async () => {
+    expect.assertions(1)
+    const savedUser = await User.findById(user._id)
+    const addressIndex = Math.floor(Math.random() * savedUser.address.length)
+    await expect(
+      updateAddressResolver(
+        null,
+        merge(updatePayload, {
+          id: savedUser.address[addressIndex]._id,
+          zip: 'some random gibberish',
+        }),
+        { user: savedUser }
+      )
+    ).rejects.toThrowError(ValidationError)
+  })
+
   it('Should create a new address when an order by the user contains this address', async () => {
     expect.assertions(3)
     const savedUser = await User.findById(user._id).populate('address')

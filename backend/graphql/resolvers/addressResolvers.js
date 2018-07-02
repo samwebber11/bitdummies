@@ -107,9 +107,14 @@ const updateAddressResolver = async (parent, args, context) => {
 
     if (!addressInOrder) {
       // If address isn't used by any order, then it is safe to update it.
-      const updatedAddress = await Address.findByIdAndUpdate(args.id, args, {
-        new: true,
-      })
+      const updatedAddress = await Address.findOneAndUpdate(
+        { _id: args.id },
+        args,
+        {
+          new: true,
+          runValidators: true,
+        }
+      )
       if (!updatedAddress) {
         throw new Error('Error in updating address')
       }

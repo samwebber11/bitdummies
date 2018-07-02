@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+import mongoose, { ValidationError } from 'mongoose'
 import { isPostalCode } from 'validator'
 
 const { Schema } = mongoose
@@ -36,6 +36,19 @@ const AddressSchema = new Schema({
     type: String,
     required: true,
   },
+})
+
+AddressSchema.pre('findOneAndUpdate', function(next) {
+  const { zip } = this.getUpdate()
+  if (!zip) {
+    next()
+  }
+
+  if (!validateZipCode(zip)) {
+    throw new ValidationError('Invalid zip code')
+  }
+
+  next()
 })
 
 const skipInit = process.env.NODE_ENV === 'test'
