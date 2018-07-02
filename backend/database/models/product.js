@@ -1,7 +1,11 @@
-import mongoose from 'mongoose'
+import mongoose, { ValidationError } from 'mongoose'
 import float from 'mongoose-float'
 
 const { Schema } = mongoose
+
+const validateImages = imagePath =>
+  imagePath.length > 0 && imagePath.length <= 5
+const validateSizes = size => size.length > 0
 
 const ProductSchema = new Schema({
   name: {
@@ -14,21 +18,24 @@ const ProductSchema = new Schema({
     enum: ['Action Figures', 'T-Shirts', 'None'],
     default: 'None',
   },
-  size: [
-    {
-      label: {
-        type: String,
-        required: true,
-        enum: ['XS', 'S', 'M', 'L', 'XL', 'Onesize'],
-        default: 'Onesize',
+  size: {
+    type: [
+      {
+        label: {
+          type: String,
+          required: true,
+          enum: ['XS', 'S', 'M', 'L', 'XL', 'Onesize'],
+          default: 'Onesize',
+        },
+        quantityAvailable: {
+          type: Number,
+          required: true,
+          min: 0,
+        },
       },
-      quantityAvailable: {
-        type: Number,
-        required: true,
-        min: 0,
-      },
-    },
-  ],
+    ],
+    validate: [validateSizes, 'Must have at least one valid size'],
+  },
   description: {
     type: String,
     required: true,
@@ -54,12 +61,15 @@ const ProductSchema = new Schema({
     enum: [5, 10, 12.5, 18, 23.5, 28],
     default: 5,
   },
-  imagePath: [
-    {
-      type: String,
-      required: true,
-    },
-  ],
+  imagePath: {
+    type: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
+    validate: [validateImages, 'Must have at least 1 and at max 5 images'],
+  },
   delicacy: {
     type: String,
     required: true,
@@ -72,6 +82,24 @@ ProductSchema.virtual('discountedPrice').get(function() {
   const discountedPrice =
     this.actualPrice - (this.actualPrice * this.discount) / 100
   return discountedPrice.toFixed(2)
+})
+
+ProductSchema.pre('findOneAndUpdate', function(next) {
+  const { size, imagePath } = this.getUpdate()
+
+  if (size) {
+    if (!validateSizes(size)) {
+      throw new ValidationError('Must have at least one valid size')
+    }
+  }
+
+  if (imagePath) {
+    if (!validateImages(imagePath)) {
+      throw new ValidationError('Must have at least 1 and at max 5 images')
+    }
+  }
+
+  next()
 })
 
 const skipInit = process.env.NODE_ENV === 'test'
