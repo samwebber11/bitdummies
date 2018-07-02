@@ -48,7 +48,7 @@ const updateProductInfoResolver = async (parent, args, context) => {
       'tax',
       'delicacy',
     ])
-    const product = await Product.findByIdAndUpdate(args.id, productArgs, {
+    const product = await Product.findOneAndUpdate(args.id, productArgs, {
       new: true,
       runValidators: true,
     })
@@ -58,9 +58,43 @@ const updateProductInfoResolver = async (parent, args, context) => {
   }
 }
 
-const updateProductImagesResolver = true
+const updateProductImagesResolver = async (parent, args, context) => {
+  // TODO: Check for admin authorization here.
+  const { user } = context
+  if (!user) {
+    throw new Error('Unauthorized')
+  }
 
-const updateProductQuantityResolver = true
+  try {
+    const product = await Product.findOneAndUpdate(
+      args.id,
+      { imagePath: args.imagePath },
+      { new: true, runValidators: true }
+    )
+    return product
+  } catch (err) {
+    throw err
+  }
+}
+
+const updateProductQuantityResolver = async (parent, args, context) => {
+  // TODO: Check for admin authorization here.
+  const { user } = context
+  if (!user) {
+    throw new Error('Unauthorized')
+  }
+
+  try {
+    const product = await Product.findOneAndUpdate(
+      args.id,
+      { size: args.size },
+      { new: true, runValidators: true }
+    )
+    return product
+  } catch (err) {
+    throw err
+  }
+}
 
 export {
   addProductResolver,

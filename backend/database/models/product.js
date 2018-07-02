@@ -15,7 +15,7 @@ const ProductSchema = new Schema({
   category: {
     type: String,
     required: true,
-    enum: ['Action Figures', 'T-Shirts', 'None'],
+    enum: ['Action Figures', 'T-Shirts', 'Shoes', 'Gloves', 'Hat', 'None'],
     default: 'None',
   },
   size: {
@@ -53,6 +53,7 @@ const ProductSchema = new Schema({
     type: Number,
     max: 50,
     min: 0,
+    default: 0,
     required: true,
   },
   tax: {
