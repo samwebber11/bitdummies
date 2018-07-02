@@ -74,5 +74,7 @@ ProductSchema.virtual('discountedPrice').get(function() {
   return discountedPrice.toFixed(2)
 })
 
-const Product = mongoose.model('Product', ProductSchema)
+const skipInit = process.env.NODE_ENV === 'test'
+
+const Product = mongoose.model('Product', ProductSchema, 'products', skipInit)
 export default Product

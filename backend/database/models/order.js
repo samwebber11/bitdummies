@@ -90,5 +90,7 @@ OrderSchema.pre('save', function(next) {
   next()
 })
 
-const Order = mongoose.model('Order', OrderSchema)
+const skipInit = process.env.NODE_ENV === 'test'
+
+const Order = mongoose.model('Order', OrderSchema, 'orders', skipInit)
 export default Order
