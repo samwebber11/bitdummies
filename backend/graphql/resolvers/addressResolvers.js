@@ -2,6 +2,7 @@ import { Types } from 'mongoose'
 
 import Address from '../../database/models/address'
 import User from '../../database/models/user'
+import { pick } from './utils'
 
 const addAddressResolver = async (parent, args, context) => {
   const { user } = context
@@ -78,4 +79,62 @@ const removeAddressResolver = async (parent, args, context) => {
   }
 }
 
-export { addAddressResolver, removeAddressResolver }
+const updateAddressResolver = async (parent, args, context) => {
+  const { user } = context
+  if (!user) {
+    throw new Error('Must be logged in')
+  }
+
+  try {
+    const savedUser = await User.findById(user._id).populate('order')
+    if (!savedUser) {
+      throw new Error('Could not find user in User model')
+    }
+
+    // Check if address ID provided is in user's list of addresses.
+    const index = savedUser.address.indexOf(args.id)
+    if (index === -1) {
+      throw new Error('Unauthorized to update this address')
+    }
+
+    // Check if an order by the user contains this address.
+    let addressInOrder = false
+    savedUser.order.forEach(order => {
+      if (order.shippingAddress.toString() === args.id.toString()) {
+        addressInOrder = true
+      }
+    })
+
+    if (!addressInOrder) {
+      // If address isn't used by any order, then it is safe to update it.
+      const updatedAddress = await Address.findByIdAndUpdate(args.id, args, {
+        new: true,
+      })
+      if (!updatedAddress) {
+        throw new Error('Error in updating address')
+      }
+      return updatedAddress
+    }
+
+    // Else, create a new address and just update the ID in user's list of addresses.
+    const addressArgs = pick(args, [
+      'address1',
+      'address2',
+      'landmark',
+      'city',
+      'state',
+      'zip',
+      'country',
+    ])
+    const newAddress = await new Address(addressArgs).save()
+
+    savedUser.address.splice(index, 1, newAddress._id)
+    await savedUser.save()
+
+    return newAddress
+  } catch (err) {
+    throw err
+  }
+}
+
+export { addAddressResolver, removeAddressResolver, updateAddressResolver }
