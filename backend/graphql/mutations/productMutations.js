@@ -52,7 +52,7 @@ const addProduct = {
     //   const userId = user.context._id
     // }
     try {
-      const product = new Product(args)
+      let product = new Product(args)
       if (product.size.quantityAvailable !== 0 && product.imagePath !== null) {
         product = await product.save()
       }
