@@ -10,7 +10,7 @@ import {
   removeAddressResolver,
   updateAddressResolver,
 } from '../../graphql/resolvers/addressResolvers'
-import { merge } from '../../graphql/resolvers/utils'
+import { merge } from '../../utils'
 import { connectMongoose, disconnectMongoose } from '../helper'
 
 beforeAll(connectMongoose)
