@@ -1,16 +1,13 @@
-import { GraphQLNonNull, GraphQLID, GraphQLList } from 'graphql'
+import { GraphQLNonNull, GraphQLID, GraphQLList, GraphQLString } from 'graphql'
 
 import OrderType from '../types/OrderType'
 import ProductOrderedInputType from '../types/ProductOrderedInputType'
-
 import {
   addOrderResolver,
   cancelOrderResolver,
+  removeProductsFromOrderResolver,
+  changeOrderStatusResolver,
 } from '../resolvers/orderResolvers'
-import {
-  removeProductsFromOrder,
-  changeOrderStatus,
-} from './updateOrderMutations'
 
 const addOrder = {
   type: OrderType,
@@ -37,5 +34,28 @@ const cancelOrder = {
   resolve: cancelOrderResolver,
 }
 
-const updateOrder = { removeProductsFromOrder, changeOrderStatus }
-export { addOrder, cancelOrder, updateOrder }
+const removeProductsFromOrder = {
+  type: OrderType,
+  args: {
+    id: {
+      type: new GraphQLNonNull(GraphQLID),
+    },
+    product: {
+      type: new GraphQLNonNull(GraphQLID),
+    },
+  },
+  // shippingAddress: new GraphQLNonNull(GraphQLID)
+  resolve: removeProductsFromOrderResolver,
+}
+
+const changeOrderStatus = {
+  type: OrderType,
+  args: {
+    status: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
+  },
+  resolve: changeOrderStatusResolver,
+}
+
+export { addOrder, cancelOrder, removeProductsFromOrder, changeOrderStatus }
