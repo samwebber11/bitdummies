@@ -44,13 +44,15 @@ const removeProductsFromOrder = {
       type: new GraphQLNonNull(GraphQLID),
     },
   },
-  // shippingAddress: new GraphQLNonNull(GraphQLID)
   resolve: removeProductsFromOrderResolver,
 }
 
 const changeOrderStatus = {
   type: OrderType,
   args: {
+    id: {
+      type: new GraphQLNonNull(GraphQLID),
+    },
     status: {
       type: new GraphQLNonNull(GraphQLString),
     },

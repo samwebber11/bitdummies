@@ -4,137 +4,131 @@ import Address from '../../database/models/address'
 import User from '../../database/models/user'
 
 const addOrderResolver = async (parent, args, context) => {
-  // TODO: Do some user checking/authorization over here.
-  if (context.user) {
-    const userId = context.user._id
-    const user = await User.findById(userId)
-    if (!user) {
-      throw new Error('No User Found')
+  const { user } = context
+  if (!user) {
+    throw new Error('Must be logged in')
+  }
+
+  try {
+    // Make sure products were provided.
+    if (!args.products || !args.products.length || args.products.length === 0) {
+      throw new Error('Must have at least one product')
     }
-    try {
-      const productIDs = []
-      args.products.forEach(product => productIDs.push(product.product))
 
-      // const productIDs = args.products.map(product => product.product)
-      const dbProducts = await Product.find(
-        { _id: { $in: productIDs } },
-        'actualPrice discount tax size'
+    // Fetch the products from the database.
+    const productIDs = args.products.map(product => product.product)
+    const dbProducts = await Product.find(
+      { _id: { $in: productIDs } },
+      'actualPrice discount tax size'
+    )
+
+    // Check whether each product was found in the database or not.
+    if (!dbProducts || dbProducts.length !== productIDs.length) {
+      throw new Error('Products not in database')
+    }
+
+    // Check whether the quantity requested for each product is within limit.
+    args.products.forEach(product => {
+      const pro = dbProducts.find(
+        dbProduct => dbProduct._id.toString() === product.product.toString()
       )
+      const proSize = pro.size.find(size => size.label === product.size)
 
-      if (dbProducts.length !== productIDs.length) {
-        throw new Error('Products not in database')
+      const quantityRequired = product.quantity
+      const { quantityAvailable } = proSize
+      if (quantityRequired > quantityAvailable) {
+        throw new Error('Quantity limit exceeded')
       }
-      args.products.forEach(product => {
-        const pro = dbProducts.find(prod => prod._id === product.product)
-        const proSize = pro.size.find(size => size.label === product.size)
-        if (proSize.quantityAvailable < product.quantity) {
-          throw new Error('Quantity Limit Exceeded')
-        }
-      })
-      // checking if the address is associated with that user or not.
-      const savedAddress = await Address.findById(args.shippingAddress)
-      if (!savedAddress) {
-        throw new Error('Invalid Address')
-      }
-      let checkAddress = false
-      user.address.forEach(address => {
-        if (savedAddress.toString() === address.address.toString()) {
-          checkAddress = true
-        }
-      })
-      if (!checkAddress) {
-        throw new Error('Address is not associated with User')
-      }
+    })
 
-      // args.products.forEach(product => {
-      //   const dbProduct = dbProducts.find(pro => pro._id === product.product)
-      //   // console.log(dbProduct)
-      //   const dbProductSize = dbProduct.size.find(
-      //     size => size.label === product.size
-      //   )
-      //   console.log(dbProductSize)
-      //   if (product.quantity > dbProductSize.quantity) {
-      //     throw new Error('Quantity limit exceeded')
-      //   }
-      // })
+    // Check if the address is valid or not.
+    const address = await Address.findById(args.shippingAddress)
+    if (!address) {
+      throw new Error('Invalid address')
+    }
 
-      // Reaching here means that all products are available.
-      // const address = await Address.findById(args.shippingAddress)
-      // if (!address) {
-      //   throw new Error('Invalid address')
-      // }
+    // Check whether the address is contained in the user's list of addresses.
+    const addressInUserAddresses = user.address.includes(address._id.toString())
+    if (!addressInUserAddresses) {
+      throw new Error('Address is not associated with user')
+    }
 
-      // TODO: Check here if the address is in the list of user's addresses.Done.
-      // TODO: Also check for payment here.
-      const products = args.products.forEach(product => {
-        const { actualPrice, tax, discount, discountedPrice } = dbProducts.find(
-          pro => pro._id.toString() === product.product.toString()
-        )
+    // TODO: Check for payment here.
 
-        return {
-          product: product.product,
-          quantity: product.quantity,
-          size: product.size,
-          actualPrice,
-          tax,
-          discount,
-          discountedPrice,
-        }
-      })
-
-      let order = new Order({
-        products,
-        status: 'Processing',
-        payment: {
-          status: 'Paid',
-          mode: 'E-wallet',
-        },
-        shippingAddress: args.shippingAddress,
-        orderedAt: Date.now(),
-      })
-
-      order = await order.save()
-      if (!order) {
-        throw new Error('Could not save order')
-      }
-
-      user.order.push(order._id)
-      await user.save()
-      if (!user) {
-        throw new Error('Error occured in saving order')
-      }
-      // Pushing the order in the list of orders for a particular user
-
-      // Update the products to reflect the decrease in quantity.
-      args.products.forEach(async product => {
+    // Update the products in the database to reflect the decrease in quantity.
+    await Promise.all(
+      args.products.map(async product => {
+        // For each product in the order, find the corresponding product in the database.
         const pro = dbProducts.find(
-          prod => prod._id.toString() === product.product.toString()
-        )
-        const index = pro.size.findIndex(
-          size => size.label.toString() === product.size.label.toString()
+          dbProduct => dbProduct._id.toString() === product.product.toString()
         )
 
+        // Find the corresponding size for the size requested, and decrease the quantity.
+        const index = pro.size.findIndex(
+          size => size.label === product.size.label
+        )
         if (index === -1) {
-          throw new Error('Some error occurred in addOrder')
+          throw new Error('Some error occurred while adding order')
         }
         pro.size[index].quantityAvailable -= product.quantity
 
+        // Reflect the change in quantity to the database.
         const updatedProduct = await Product.findByIdAndUpdate(
-          product.product,
+          pro._id,
           {
             size: pro.size,
           },
-          { new: true }
+          { new: true, runValidators: true }
         )
-        updatedProduct.save()
         if (!updatedProduct) {
           throw new Error('Could not update product')
         }
-        // return updatedProduct
       })
-    } catch (err) {
-      throw err
+    )
+
+    // Create a list of products that have been ordered, for saving to the database.
+    const orderedProducts = args.products.map(product => {
+      const { actualPrice, discount, discountedPrice, tax } = dbProducts.find(
+        pro => pro._id.toString() === product.product.toString()
+      )
+
+      return {
+        product: product.product,
+        quantity: product.quantity,
+        size: product.size,
+        actualPrice,
+        tax,
+        discount,
+        discountedPrice,
+      }
+    })
+
+    // Save the order to the database.
+    const order = await new Order({
+      orderedProducts,
+      status: 'Processing',
+      payment: {
+        status: 'Paid',
+        mode: 'E-wallet',
+        transactionID: Math.floor(Math.random() * 1000000 + 1).toString(),
+      },
+      shippingAddress: address._id,
+      orderedAt: Date.now(),
+    }).save()
+    if (!order) {
+      throw new Error('Could not save order')
     }
+
+    // Also, add the order to the user's list of orders.
+    user.order.push(order._id)
+    await user.save()
+    if (!user) {
+      throw new Error('Error occured in saving order')
+    }
+
+    return order
+  } catch (err) {
+    throw err
   }
 }
 
