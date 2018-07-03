@@ -48,7 +48,8 @@ const updateProductInfoResolver = async (parent, args, context) => {
       'tax',
       'delicacy',
     ])
-    const product = await Product.findOneAndUpdate(args.id, productArgs, {
+
+    const product = await Product.findByIdAndUpdate(args.id, productArgs, {
       new: true,
       runValidators: true,
     })
@@ -66,11 +67,11 @@ const updateProductImagesResolver = async (parent, args, context) => {
   }
 
   try {
-    const product = await Product.findOneAndUpdate(
-      args.id,
-      { imagePath: args.imagePath },
-      { new: true, runValidators: true }
-    )
+    const productArgs = pick(args, ['imagePath'])
+    const product = await Product.findByIdAndUpdate(args.id, productArgs, {
+      new: true,
+      runValidators: true,
+    })
     return product
   } catch (err) {
     throw err
@@ -85,10 +86,45 @@ const updateProductQuantityResolver = async (parent, args, context) => {
   }
 
   try {
-    const product = await Product.findOneAndUpdate(
+    const productArgs = pick(args, ['size'])
+
+    if (!productArgs.size) {
+      throw new Error('Must provide label and quantity for size')
+    }
+
+    const oldProduct = await Product.findById(args.id)
+    if (!oldProduct) {
+      return null
+    }
+
+    const sizes = oldProduct.size.map(size => ({
+      label: size.label,
+      quantityAvailable: size.quantityAvailable,
+    }))
+
+    // To ensure sizes are handled properly.
+    // Combines both previous and new sizes.
+    productArgs.size.forEach(newSize => {
+      let sizeInCommon = false
+      sizes.forEach(oldSize => {
+        if (oldSize.label === newSize.label) {
+          sizeInCommon = true
+          oldSize.quantityAvailable = newSize.quantityAvailable
+        }
+      })
+
+      if (!sizeInCommon) {
+        sizes.push(newSize)
+      }
+    })
+
+    const product = await Product.findByIdAndUpdate(
       args.id,
-      { size: args.size },
-      { new: true, runValidators: true }
+      { size: sizes },
+      {
+        new: true,
+        runValidators: true,
+      }
     )
     return product
   } catch (err) {
