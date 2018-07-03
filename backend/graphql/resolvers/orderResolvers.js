@@ -176,9 +176,10 @@ const cancelOrderResolver = async (parent, args, context) => {
         if (!updatedProduct) {
           throw new Error('Cannot update new Product')
         }
+        updatedProduct.save()
       })
 
-      const index = user.order.indexOf(args.id)
+      const index = user.order.findIndex(args.id)
       if (index === -1) {
         throw new Error('Order is not present')
       }
