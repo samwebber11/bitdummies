@@ -57,7 +57,7 @@ describe('updateUser resolver', () => {
     expect(updatedUser.name).toEqual(`${dummyFirstName} ${dummyLastName}`)
 
     // Cleanup.
-    await User.findOneAndUpdate(
+    await User.findByIdAndUpdate(
       { _id: updatedUser._id },
       { firstName, lastName },
       { runValidators: true }
@@ -86,7 +86,7 @@ describe('updateUser resolver', () => {
     expect(updatedUser.name).toEqual(`${savedUser.name}`)
 
     // Cleanup.
-    await User.findOneAndUpdate(
+    await User.findByIdAndUpdate(
       { _id: updatedUser._id },
       { firstName, lastName, phone },
       { runValidators: true }

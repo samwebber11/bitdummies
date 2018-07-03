@@ -48,7 +48,8 @@ const updateProductInfoResolver = async (parent, args, context) => {
       'tax',
       'delicacy',
     ])
-    const product = await Product.findOneAndUpdate(args.id, productArgs, {
+
+    const product = await Product.findByIdAndUpdate(args.id, productArgs, {
       new: true,
       runValidators: true,
     })
@@ -66,11 +67,11 @@ const updateProductImagesResolver = async (parent, args, context) => {
   }
 
   try {
-    const product = await Product.findOneAndUpdate(
-      args.id,
-      { imagePath: args.imagePath },
-      { new: true, runValidators: true }
-    )
+    const productArgs = pick(args, ['imagePath'])
+    const product = await Product.findByIdAndUpdate(args.id, productArgs, {
+      new: true,
+      runValidators: true,
+    })
     return product
   } catch (err) {
     throw err
@@ -85,11 +86,11 @@ const updateProductQuantityResolver = async (parent, args, context) => {
   }
 
   try {
-    const product = await Product.findOneAndUpdate(
-      args.id,
-      { size: args.size },
-      { new: true, runValidators: true }
-    )
+    const productArgs = pick(args, ['size'])
+    const product = await Product.findByIdAndUpdate(args.id, productArgs, {
+      new: true,
+      runValidators: true,
+    })
     return product
   } catch (err) {
     throw err
