@@ -5,7 +5,39 @@ const { Schema } = mongoose
 
 const validateImages = imagePath =>
   imagePath.length > 0 && imagePath.length <= 5
-const validateSizes = size => size.length > 0
+const sizeLength = size => size.length > 0
+const uniqueSize = size => {
+  const countLabels = {
+    XS: 0,
+    S: 0,
+    M: 0,
+    L: 0,
+    XL: 0,
+    Onesize: 0,
+  }
+
+  size.forEach(currentSize => {
+    countLabels[currentSize.label] += 1
+  })
+
+  let invalidSize = false
+  Object.entries(countLabels).forEach(label => {
+    if (label[1] > 1) {
+      invalidSize = true
+    }
+  })
+
+  if (invalidSize) {
+    return false
+  }
+
+  return true
+}
+
+const validateSize = [
+  { validator: sizeLength, msg: 'Must have at least one valid size' },
+  { validator: uniqueSize, msg: 'Size labels must be unique' },
+]
 
 const ProductSchema = new Schema({
   name: {
@@ -34,7 +66,7 @@ const ProductSchema = new Schema({
         },
       },
     ],
-    validate: [validateSizes, 'Must have at least one valid size'],
+    validate: validateSize,
   },
   description: {
     type: String,
@@ -89,8 +121,12 @@ ProductSchema.pre('findOneAndUpdate', function(next) {
   const { size, imagePath } = this.getUpdate()
 
   if (size) {
-    if (!validateSizes(size)) {
+    if (!sizeLength(size)) {
       throw new ValidationError('Must have at least one valid size')
+    }
+
+    if (!uniqueSize(size)) {
+      throw new ValidationError('Size labels must be unique')
     }
   }
 

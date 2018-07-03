@@ -1,5 +1,5 @@
 import Product from '../../database/models/product'
-import { pick } from './utils'
+import { pick } from '../../utils'
 
 const addProductResolver = async (parent, args, context) => {
   // TODO: Check for admin authorization here.
