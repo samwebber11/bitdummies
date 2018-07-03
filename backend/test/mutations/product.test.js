@@ -1,9 +1,14 @@
 /* eslint-env jest */
 
-import { ValidationError } from 'mongoose'
+import { ValidationError, Types } from 'mongoose'
 
+import Product from '../../database/models/product'
 import User from '../../database/models/user'
-import { addProductResolver } from '../../graphql/resolvers/productResolvers'
+import {
+  addProductResolver,
+  removeProductResolver,
+  updateProductInfoResolver,
+} from '../../graphql/resolvers/productResolvers'
 import { merge, pick } from '../../utils'
 import { connectMongoose, disconnectMongoose } from '../helper'
 
@@ -236,5 +241,177 @@ describe('addProduct resolver', () => {
     await expect(
       addProductResolver(null, tooManyImagesProduct, { user: savedUser })
     ).rejects.toThrowError(ValidationError)
+  })
+})
+
+describe('removeProduct resolver', () => {
+  const user = {
+    _id: '5b39f7bb26670102359a8c10',
+  }
+
+  it('Should remove a product', async () => {
+    expect.assertions(1)
+    const savedUser = await User.findById(user._id)
+    const products = await Product.find({})
+    const productIndex = Math.floor(Math.random() * products.length)
+    const product = products[productIndex]
+
+    const removedProduct = await removeProductResolver(
+      null,
+      { id: product._id },
+      { user: savedUser }
+    )
+    // Hack to avoid hitting the call stack.
+    expect(JSON.stringify(removedProduct)).toEqual(JSON.stringify(product))
+  })
+
+  it('Should not remove a product when there is no user', async () => {
+    expect.assertions(1)
+    const products = await Product.find({})
+    const productIndex = Math.floor(Math.random() * products.length)
+    const product = products[productIndex]
+
+    await expect(removeProductResolver(null, product, {})).rejects.toThrow(
+      'Unauthorized'
+    )
+  })
+
+  it(`Should not remove a product that doesn't exist`, async () => {
+    expect.assertions(1)
+    const savedUser = await User.findById(user._id)
+    const productID = new Types.ObjectId()
+
+    const removedProduct = await removeProductResolver(
+      null,
+      { id: productID },
+      { user: savedUser }
+    )
+    expect(removedProduct).toBeNull()
+  })
+})
+
+describe('updateProductInfo resolver', async () => {
+  const user = {
+    _id: '5b39f7bb26670102359a8c10',
+  }
+
+  const updatePayload = {
+    name: 'Awesome Plastic Pizza',
+    category: 'Gloves',
+    size: [
+      {
+        label: 'S',
+        quantityAvailable: 5,
+      },
+      {
+        label: 'L',
+        quantityAvailable: 10,
+      },
+      {
+        label: 'XL',
+        quantityAvailable: 3,
+      },
+    ],
+    description: 'Omnis reiciendis expedita iure consequatur non.',
+    actualPrice: 735.61,
+    discount: 10,
+    tax: 18,
+    imagePath: [
+      'Voluptatem nostrum autem.',
+      'Ut possimus maiores placeat voluptate quam accusantium aut.',
+      'Numquam at sed quo autem velit optio.',
+      'Quisquam incidunt fugit vel eos at et alias maiores perspiciatis.',
+    ],
+    delicacy: 'low',
+  }
+
+  it(`Should update a product's 'name', 'category', 'description', 'actualPrice', 'discount', 'tax' and 'delicacy' fields`, async () => {
+    expect.assertions(19)
+    const savedUser = await User.findById(user._id)
+    const products = await Product.find({})
+    const productIndex = Math.floor(Math.random() * products.length)
+    const productArgs = merge(updatePayload, { id: products[productIndex]._id })
+
+    const product = await updateProductInfoResolver(null, productArgs, {
+      user: savedUser,
+    })
+
+    expect(product).toHaveProperty('_id')
+    expect(product).toHaveProperty('name')
+    expect(product.name).toBe(updatePayload.name)
+    expect(product).toHaveProperty('category')
+    expect(product.category).toBe(updatePayload.category)
+    expect(product).toHaveProperty('description')
+    expect(product.description).toBe(updatePayload.description)
+    expect(product).toHaveProperty('actualPrice')
+    expect(product.actualPrice).toBe(updatePayload.actualPrice)
+    expect(product).toHaveProperty('discount')
+    expect(product.discount).toBe(updatePayload.discount)
+    expect(product).toHaveProperty('tax')
+    expect(product.tax).toBe(updatePayload.tax)
+    expect(product).toHaveProperty('delicacy')
+    expect(product.delicacy).toBe(updatePayload.delicacy)
+    expect(product).toHaveProperty('size')
+    expect(product.size.length).toBe(products[productIndex].size.length)
+    expect(product).toHaveProperty('imagePath')
+    expect(product.imagePath.length).toBe(
+      products[productIndex].imagePath.length
+    )
+
+    // Cleanup.
+    await Product.findOneAndUpdate(
+      { _id: products[productIndex]._id },
+      products[productIndex],
+      { new: true, runValidators: true }
+    )
+  })
+
+  it('Should not update a product when there is no user', async () => {
+    expect.assertions(1)
+    const products = await Product.find({})
+    const productIndex = Math.floor(Math.random() * products.length)
+    const productArgs = merge(updatePayload, { id: products[productIndex]._id })
+
+    await expect(
+      updateProductInfoResolver(null, productArgs, {})
+    ).rejects.toThrow('Unauthorized')
+  })
+
+  it(`Should not update a product's 'imagePath' field`, async () => {
+    expect.assertions(2)
+    const savedUser = await User.findById(user._id)
+    const products = await Product.find({})
+    const productIndex = Math.floor(Math.random() * products.length)
+    const productArgs = merge(pick(updatePayload, ['imagePath']), {
+      id: products[productIndex]._id,
+    })
+
+    const product = await updateProductInfoResolver(null, productArgs, {
+      user: savedUser,
+    })
+
+    expect(product).toHaveProperty('_id')
+    expect(JSON.stringify(product)).toEqual(
+      JSON.stringify(products[productIndex])
+    )
+  })
+
+  it(`Should not update a product's 'size' field`, async () => {
+    expect.assertions(2)
+    const savedUser = await User.findById(user._id)
+    const products = await Product.find({})
+    const productIndex = Math.floor(Math.random() * products.length)
+    const productArgs = merge(pick(updatePayload, ['size']), {
+      id: products[productIndex]._id,
+    })
+
+    const product = await updateProductInfoResolver(null, productArgs, {
+      user: savedUser,
+    })
+
+    expect(product).toHaveProperty('_id')
+    expect(JSON.stringify(product)).toEqual(
+      JSON.stringify(products[productIndex])
+    )
   })
 })
