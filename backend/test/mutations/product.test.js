@@ -9,6 +9,7 @@ import {
   removeProductResolver,
   updateProductInfoResolver,
   updateProductImagesResolver,
+  updateProductQuantityResolver,
 } from '../../graphql/resolvers/productResolvers'
 import { merge, pick } from '../../utils'
 import { connectMongoose, disconnectMongoose } from '../helper'
@@ -560,7 +561,144 @@ describe('updateProductImages resolver', () => {
   })
 })
 
-describe('updateProductQuantity resolver', () => {})
+describe('updateProductQuantity resolver', () => {
+  const user = {
+    _id: '5b39f7bb26670102359a8c10',
+  }
+
+  const updatePayload = {
+    name: 'Awesome Plastic Pizza',
+    category: 'Gloves',
+    size: [
+      {
+        label: 'S',
+        quantityAvailable: 5,
+      },
+      {
+        label: 'L',
+        quantityAvailable: 10,
+      },
+      {
+        label: 'XL',
+        quantityAvailable: 3,
+      },
+    ],
+    description: 'Omnis reiciendis expedita iure consequatur non.',
+    actualPrice: 735.61,
+    discount: 10,
+    tax: 18,
+    imagePath: [
+      'Voluptatem nostrum autem.',
+      'Ut possimus maiores placeat voluptate quam accusantium aut.',
+      'Numquam at sed quo autem velit optio.',
+      'Quisquam incidunt fugit vel eos at et alias maiores perspiciatis.',
+    ],
+    delicacy: 'low',
+  }
+
+  it(`Should update a product's 'size' field`, async () => {
+    expect.assertions(6)
+    const savedUser = await User.findById(user._id)
+    const products = await Product.find({})
+    const productIndex = Math.floor(Math.random() * products.length)
+    const oldProduct = products[productIndex]
+    const productArgs = merge(updatePayload, {
+      id: oldProduct._id,
+    })
+
+    const updatedProduct = await updateProductQuantityResolver(
+      null,
+      productArgs,
+      {
+        user: savedUser,
+      }
+    )
+
+    expect(updatedProduct).toHaveProperty('_id')
+    expect(updatedProduct).toHaveProperty('size')
+    expect(updatedProduct.size.length).not.toBe(0)
+
+    const oldSizes = oldProduct.size.map(size => ({
+      label: size.label,
+      quantityAvailable: size.quantityAvailable,
+    }))
+
+    const expectedSizes = [...oldSizes]
+    productArgs.size.forEach(newSize => {
+      let sizeInCommon = false
+      expectedSizes.forEach(oldSize => {
+        if (oldSize.label === newSize.label) {
+          sizeInCommon = true
+          oldSize.quantityAvailable = newSize.quantityAvailable
+        }
+      })
+
+      if (!sizeInCommon) {
+        expectedSizes.push(newSize)
+      }
+    })
+
+    const newSizes = updatedProduct.size.map(size => ({
+      label: size.label,
+      quantityAvailable: size.quantityAvailable,
+    }))
+
+    expect(newSizes.length).toBe(expectedSizes.length)
+    expect(newSizes).toEqual(expectedSizes)
+    expect(newSizes).not.toEqual(oldSizes)
+
+    // Cleanup.
+    await Product.findByIdAndUpdate(oldProduct._id, oldProduct, {
+      new: true,
+      runValidators: true,
+    })
+  })
+
+  it('Should not update a product when there is no user', async () => {
+    expect.assertions(1)
+    const products = await Product.find({})
+    const productIndex = Math.floor(Math.random() * products.length)
+    const productArgs = merge(pick(updatePayload, ['size']), {
+      id: products[productIndex]._id,
+    })
+
+    await expect(
+      updateProductQuantityResolver(null, productArgs, {})
+    ).rejects.toThrow('Unauthorized')
+  })
+
+  it(`Should not update a product that doesn't exist`, async () => {
+    expect.assertions(1)
+    const savedUser = await User.findById(user._id)
+    const productArgs = merge(updatePayload, { id: new Types.ObjectId() })
+    const updatedProduct = await updateProductQuantityResolver(
+      null,
+      productArgs,
+      {
+        user: savedUser,
+      }
+    )
+    expect(updatedProduct).toBeNull()
+  })
+
+  it(`Should not update when 'size' field is missing`, async () => {
+    expect.assertions(1)
+    const savedUser = await User.findById(user._id)
+    const products = await Product.find({})
+    const productIndex = Math.floor(Math.random() * products.length)
+    const oldProduct = products[productIndex]
+    const productArgs = merge(
+      pick(updatePayload, ['name', 'category', 'imagePath']),
+      { id: oldProduct._id }
+    )
+
+    await expect(
+      updateProductQuantityResolver(null, productArgs, {
+        user: savedUser,
+      })
+    ).rejects.toThrow('Must provide label and quantity for size')
+  })
+})
 
 describe('removeProduct resolver', () => {
   const user = {

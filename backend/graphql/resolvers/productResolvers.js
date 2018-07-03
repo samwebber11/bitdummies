@@ -87,10 +87,45 @@ const updateProductQuantityResolver = async (parent, args, context) => {
 
   try {
     const productArgs = pick(args, ['size'])
-    const product = await Product.findByIdAndUpdate(args.id, productArgs, {
-      new: true,
-      runValidators: true,
+
+    if (!productArgs.size) {
+      throw new Error('Must provide label and quantity for size')
+    }
+
+    const oldProduct = await Product.findById(args.id)
+    if (!oldProduct) {
+      return null
+    }
+
+    const sizes = oldProduct.size.map(size => ({
+      label: size.label,
+      quantityAvailable: size.quantityAvailable,
+    }))
+
+    // To ensure sizes are handled properly.
+    // Combines both previous and new sizes.
+    productArgs.size.forEach(newSize => {
+      let sizeInCommon = false
+      sizes.forEach(oldSize => {
+        if (oldSize.label === newSize.label) {
+          sizeInCommon = true
+          oldSize.quantityAvailable = newSize.quantityAvailable
+        }
+      })
+
+      if (!sizeInCommon) {
+        sizes.push(newSize)
+      }
     })
+
+    const product = await Product.findByIdAndUpdate(
+      args.id,
+      { size: sizes },
+      {
+        new: true,
+        runValidators: true,
+      }
+    )
     return product
   } catch (err) {
     throw err
