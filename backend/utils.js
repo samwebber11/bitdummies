@@ -5,7 +5,9 @@ export const merge = (prev, next) => Object.assign({}, prev, next)
 export const pick = (object, keys) => {
   const newObject = {}
   keys.forEach(key => {
-    newObject[key] = object[key]
+    if (object[key]) {
+      newObject[key] = object[key]
+    }
   })
   return newObject
 }
