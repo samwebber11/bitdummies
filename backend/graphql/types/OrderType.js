@@ -4,6 +4,7 @@ import {
   GraphQLString,
   GraphQLID,
   GraphQLList,
+  GraphQLFloat,
 } from 'graphql'
 import GraphQLDate from 'graphql-date'
 
@@ -43,6 +44,9 @@ const OrderType = new GraphQLObjectType({
     },
     orderedAt: {
       type: new GraphQLNonNull(GraphQLDate),
+    },
+    total: {
+      type: new GraphQLNonNull(GraphQLFloat),
     },
   }),
 })

@@ -47,7 +47,9 @@ const addOrderResolver = async (parent, args, context) => {
     }
 
     // Check whether the address is contained in the user's list of addresses.
-    const addressInUserAddresses = user.address.includes(address._id.toString())
+    const addressInUserAddresses = user.address.find(
+      userAddress => userAddress.toString() === address._id.toString()
+    )
     if (!addressInUserAddresses) {
       throw new Error('Address is not associated with user')
     }
@@ -102,7 +104,7 @@ const addOrderResolver = async (parent, args, context) => {
 
     // Save the order to the database.
     const order = await new Order({
-      orderedProducts,
+      products: orderedProducts,
       status: 'Processing',
       payment: {
         status: 'Paid',
@@ -209,8 +211,10 @@ const removeProductFromOrderResolver = async (parent, args, context) => {
     }
 
     // Check to see if the order is in the user's list of orders.
-    const orderIndex = user.order.indexOf(args.id)
-    if (orderIndex === -1) {
+    const orderInUserOrders = user.order.find(
+      userOrder => userOrder.toString() === order._id.toString()
+    )
+    if (!orderInUserOrders) {
       throw new Error('Order does not belong to the current user')
     }
 
