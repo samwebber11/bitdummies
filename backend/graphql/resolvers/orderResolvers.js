@@ -64,9 +64,7 @@ const addOrderResolver = async (parent, args, context) => {
         )
 
         // Find the corresponding size for the size requested, and decrease the quantity.
-        const index = pro.size.findIndex(
-          size => size.label === product.size.label
-        )
+        const index = pro.size.findIndex(size => size.label === product.size)
         if (index === -1) {
           throw new Error('Some error occurred while adding order')
         }
@@ -133,62 +131,65 @@ const addOrderResolver = async (parent, args, context) => {
 }
 
 const cancelOrderResolver = async (parent, args, context) => {
-  if (context.user) {
-    const userId = context.user._id
-    const user = User.findById(userId)
-    if (!user) {
-      throw new Error('User not logged in')
+  const { user } = context
+  if (!user) {
+    throw new Error('Msut be logged in')
+  }
+
+  try {
+    // Find the order and check that its status is 'Processing'.
+    const order = await Order.findById(args.id)
+    if (!order) {
+      throw new Error('Invalid order')
     }
-    try {
-      const newOrder = Order.findById(args.id)
-      if (!newOrder) {
-        throw new Error('Order is not present')
-      }
-      if (newOrder.status.toString() !== 'Processing') {
-        throw new Error('Cannot cancel order now!')
-      }
+    if (order.status !== 'Processing') {
+      throw new Error('Order cannot be cancelled now')
+    }
 
-      newOrder.products.forEach(async product => {
-        const pro = Product.findById(product.product)
-        const index = pro.size.findIndex(
-          size => size.label.toString() === product.size.label.toString()
-        )
+    // Check to see if the order is in the user's list of orders.
+    const orderIndex = user.order.findIndex(args.id)
+    if (orderIndex === -1) {
+      throw new Error('Order does not belong to the current user')
+    }
 
+    // Update the products in the database to reflect the increase in quantity.
+    await Promise.all(
+      order.products.map(async product => {
+        // For each product in the order, find the corresponding product in the database.
+        const pro = await Product.findById(product.product)
+        if (!pro) {
+          throw new Error('Product not found')
+        }
+
+        // Find the corresponding size of the product, and increase the quantity.
+        const index = pro.size.findIndex(size => size.label === product.size)
         if (index === -1) {
-          throw new Error('Some error occurred in CancelOrder')
+          throw new Error('Some error occurred while cancelling order')
         }
         pro.size[index].quantityAvailable += product.quantity
+
+        // Reflect the change in quantity to the database.
         const updatedProduct = await Product.findByIdAndUpdate(
           product.product,
           {
-            $set: {
-              size: pro.size,
-            },
+            size: pro.size,
           },
-          { new: true }
+          { new: true, runValidators: true }
         )
         if (!updatedProduct) {
-          throw new Error('Cannot update new Product')
+          throw new Error('Could not update product')
         }
-        updatedProduct.save()
       })
+    )
 
-      const index = user.order.findIndex(args.id)
-      if (index === -1) {
-        throw new Error('Order is not present')
-      }
-      await user.order.splice(index, 1)
-      user.save()
-      if (!user) {
-        throw new Error('Cannot update User List')
-      }
+    // Remove the order from the user's list of orders and save to the database.
+    user.order.splice(orderIndex, 1)
+    await user.save()
 
-      const cancelledOrder = await Order.findByIdAndRemove(args.id)
-      return cancelledOrder
-    } catch (err) {
-      console.log('Error occurred in cancelling order: ', err)
-      throw err
-    }
+    // Remove the order from the database.
+    return await Order.findByIdAndRemove(args.id)
+  } catch (err) {
+    throw err
   }
 }
 
