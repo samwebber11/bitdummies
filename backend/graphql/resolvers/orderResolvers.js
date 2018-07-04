@@ -1,7 +1,6 @@
 import Order from '../../database/models/order'
 import Product from '../../database/models/product'
 import Address from '../../database/models/address'
-import User from '../../database/models/user'
 
 const addOrderResolver = async (parent, args, context) => {
   const { user } = context
@@ -259,36 +258,25 @@ const removeProductFromOrderResolver = async (parent, args, context) => {
   }
 }
 
-const changeOrderStatusResolver = async (args, parent, context) => {
-  if (context.user) {
-    const userId = context.user._id
-    const user = User.find(userId)
-    if (!user) {
-      throw new Error('User does not exists')
-    }
-    let orderPresent = false
-    try {
-      user.order.forEach(order => {
-        if (order.order.toString() === args._id.toString()) {
-          orderPresent = true
-        }
-      })
-      if (!orderPresent) {
-        throw new Error('No Order is associated')
-      }
-      Order.findByIdAndUpdate(
-        args._id,
-        {
-          $set: {
-            status: args.status,
-          },
-        },
-        { new: true }
-      )
-    } catch (err) {
-      console.log('Error Updating status: ', err)
-      throw err
-    }
+const changeOrderStatusResolver = async (parent, args, context) => {
+  // TODO: Check for admin authorization here.
+  const { user } = context
+  if (!user) {
+    throw new Error('Unauthorized')
+  }
+
+  try {
+    // Find the order.
+    const order = await Order.findByIdAndUpdate(
+      args.id,
+      {
+        status: args.status,
+      },
+      { new: true, runValidators: true }
+    )
+    return order
+  } catch (err) {
+    throw err
   }
 }
 
