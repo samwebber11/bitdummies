@@ -5,7 +5,7 @@ import ProductOrderedInputType from '../types/ProductOrderedInputType'
 import {
   addOrderResolver,
   cancelOrderResolver,
-  removeProductsFromOrderResolver,
+  removeProductFromOrderResolver,
   changeOrderStatusResolver,
 } from '../resolvers/orderResolvers'
 
@@ -34,7 +34,7 @@ const cancelOrder = {
   resolve: cancelOrderResolver,
 }
 
-const removeProductsFromOrder = {
+const removeProductFromOrder = {
   type: OrderType,
   args: {
     id: {
@@ -44,7 +44,7 @@ const removeProductsFromOrder = {
       type: new GraphQLNonNull(GraphQLID),
     },
   },
-  resolve: removeProductsFromOrderResolver,
+  resolve: removeProductFromOrderResolver,
 }
 
 const changeOrderStatus = {
@@ -60,4 +60,4 @@ const changeOrderStatus = {
   resolve: changeOrderStatusResolver,
 }
 
-export { addOrder, cancelOrder, removeProductsFromOrder, changeOrderStatus }
+export { addOrder, cancelOrder, removeProductFromOrder, changeOrderStatus }

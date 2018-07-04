@@ -147,7 +147,7 @@ const cancelOrderResolver = async (parent, args, context) => {
     }
 
     // Check to see if the order is in the user's list of orders.
-    const orderIndex = user.order.findIndex(args.id)
+    const orderIndex = user.order.indexOf(args.id)
     if (orderIndex === -1) {
       throw new Error('Order does not belong to the current user')
     }
@@ -193,67 +193,69 @@ const cancelOrderResolver = async (parent, args, context) => {
   }
 }
 
-const removeProductsFromOrderResolver = async (parent, args, context) => {
-  if (context.user) {
-    const userId = context.user._id
-    const user = User.findById(userId)
-    try {
-      let orderPresent = false
-      user.order.forEach(order => {
-        if (order.order.toString() === args.id.toString()) {
-          orderPresent = true
-        }
-      })
-      if (!orderPresent) {
-        throw new Error('No Order is associated')
-      }
-      const order = Order.find(args.id)
-      let productCheck = false
-      order.products.forEach(product => {
-        if (product.product.toString() === args.product.id.toString()) {
-          productCheck = true
-        }
-      })
-      if (!productCheck) {
-        throw new Error('Product Not Found')
-      }
+const removeProductFromOrderResolver = async (parent, args, context) => {
+  const { user } = context
+  if (!user) {
+    throw new Error('Must be logged in')
+  }
 
-      //  Updating the size of product
-      const pro = Product.find(args.product.id)
-      const index = pro.size.findIndex(pro.size.label)
-
-      if (index === -1) {
-        throw new Error('Some error occurred in addOrder')
-      }
-      pro.size[index].quantityAvailable += order.products.product.quantity
-
-      const updatedProduct = await Product.findByIdAndUpdate(
-        args.product.id,
-        {
-          size: pro.size,
-        },
-        { new: true }
-      )
-      updatedProduct.save()
-      if (!updatedProduct) {
-        throw new Error('Could not update product')
-      }
-      // return updatedProduct
-
-      const index1 = user.order.products.findIndex(args.product.id)
-      if (index1 === -1) {
-        throw new Error('Order is not present')
-      }
-      await user.order.products.splice(index1, 1)
-      user.save()
-      if (!user) {
-        throw new Error('Cannot update User List')
-      }
-      return order
-    } catch (err) {
-      console.log('Error occurred in updating order: ', err)
-      throw err
+  try {
+    // Find the order and check that its status is 'Processing'.
+    const order = await Order.findById(args.id)
+    if (!order) {
+      throw new Error('Invalid order')
     }
+    if (order.status !== 'Processing') {
+      throw new Error('Order cannot be cancelled now')
+    }
+
+    // Check to see if the order is in the user's list of orders.
+    const orderIndex = user.order.indexOf(args.id)
+    if (orderIndex === -1) {
+      throw new Error('Order does not belong to the current user')
+    }
+
+    // Check that the product ID is valid.
+    const product = await Product.findById(args.product)
+    if (!product) {
+      throw new Error('Invalid product')
+    }
+
+    // Check that the order contains the provided product ID.
+    const productIndex = order.products.findIndex(
+      pro => pro.product.toString() === args.product.toString()
+    )
+    if (!productIndex) {
+      throw new Error('Product not found in order')
+    }
+
+    // Find the corresponding size for the product, and increase the quantity.
+    const sizeIndex = product.size.findIndex(
+      size => size.label === order.products[productIndex].size
+    )
+    if (sizeIndex === -1) {
+      throw new Error('Some error occurred while removing product from order')
+    }
+    product.size[sizeIndex].quantityAvailable +=
+      order.products[productIndex].quantity
+
+    // Reflect the increase in product quantity to the database.
+    const updatedProduct = await Product.findByIdAndUpdate(
+      args.product,
+      {
+        size: product.size,
+      },
+      { new: true, runValidators: true }
+    )
+    if (!updatedProduct) {
+      throw new Error('Could not update product')
+    }
+
+    // Remove the product from the order.
+    order.products.splice(productIndex, 1)
+    return await order.save()
+  } catch (err) {
+    throw err
   }
 }
 
@@ -293,6 +295,6 @@ const changeOrderStatusResolver = async (args, parent, context) => {
 export {
   addOrderResolver,
   cancelOrderResolver,
-  removeProductsFromOrderResolver,
+  removeProductFromOrderResolver,
   changeOrderStatusResolver,
 }
