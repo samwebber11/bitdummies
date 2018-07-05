@@ -1,6 +1,6 @@
 /* eslint-env jest */
 
-import { Types } from 'mongoose'
+import { Types, ValidationError } from 'mongoose'
 
 import Address from '../../database/models/address'
 import Order from '../../database/models/order'
@@ -10,6 +10,7 @@ import {
   addOrderResolver,
   cancelOrderResolver,
   removeProductFromOrderResolver,
+  changeOrderStatusResolver,
 } from '../../graphql/resolvers/orderResolvers'
 import { merge, shuffleArray } from '../../utils'
 import { connectMongoose, disconnectMongoose } from '../helper'
@@ -1595,5 +1596,435 @@ describe('removeProductFromOrder resolver', () => {
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
     await Product.findByIdAndRemove(unorderedProduct._id)
+  })
+})
+
+describe('changeOrderStatus resolver', () => {
+  const user = {
+    _id: '5b39f7bb26670102359a8c10',
+  }
+
+  const dummyProduct1 = {
+    name: 'Handcrafted Plastic Computer',
+    size: [
+      {
+        label: 'XS',
+        quantityAvailable: 5,
+      },
+      {
+        label: 'M',
+        quantityAvailable: 10,
+      },
+    ],
+    actualPrice: 984.99,
+    imagePath: [
+      'Optio labore laudantium et et a eaque sed',
+      'Neque non ullam nam qui corrupti similique officia aut quis',
+      'Et explicabo aut dicta',
+    ],
+  }
+
+  const dummyProduct2 = {
+    name: 'Unbranded Soft Hat',
+    size: [
+      {
+        label: 'L',
+        quantityAvailable: 10,
+      },
+      {
+        label: 'XL',
+        quantityAvailable: 15,
+      },
+    ],
+    actualPrice: 702.99,
+    imagePath: [
+      'Aspernatur est similique blanditiis aut et sit',
+      'Commodi quod officia recusandae',
+      'Alias dolor consequatur ab rerum quia rerum inventore',
+      'Adipisci iure veniam',
+    ],
+  }
+
+  const dummyProduct3 = {
+    name: 'Tasty Wooden Pizza',
+    size: [
+      {
+        label: 'S',
+        quantityAvailable: 10,
+      },
+      {
+        label: 'L',
+        quantityAvailable: 5,
+      },
+      {
+        label: 'XL',
+        quantityAvailable: 15,
+      },
+    ],
+    actualPrice: 888.99,
+    imagePath: [
+      'Sunt quisquam in beatae',
+      'Quia cumque odit ut voluptatem velit nulla',
+      'Natus dicta minima explicabo earum optio reiciendis provident',
+    ],
+  }
+
+  const dummyAddress = {
+    address1: '7745',
+    address2: 'Harvey Village',
+    landmark: 'Near Darian Common',
+    city: 'Markston',
+    state: 'North Carolina',
+    zip: '10774',
+    country: 'Japan',
+  }
+
+  const dummyOrder = {
+    status: 'Processing',
+    payment: {
+      status: 'Paid',
+      mode: 'E-wallet',
+      transactionID: Math.floor(Math.random() * 1000000 + 1).toString(),
+    },
+    orderedAt: Date.now(),
+  }
+
+  it('Should change the status of an order', async () => {
+    expect.assertions(4)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const { _id, size, actualPrice, tax, discount } = product
+      const sizeIndex = Math.floor(Math.random() * size.length)
+      const { label, quantityAvailable } = size[sizeIndex]
+      return {
+        product: _id,
+        size: label,
+        quantity: quantityAvailable - 2,
+        actualPrice,
+        tax,
+        discount,
+      }
+    })
+
+    // Get address for the order to be delivered to.
+    const address = await Address.create(dummyAddress)
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Add the order to the database manually.
+    const orderArgs = merge(dummyOrder, {
+      products: orderProducts,
+      shippingAddress: address._id,
+    })
+    const order = await Order.create(orderArgs)
+    const savedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $push: { order: order._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Actual test begins.
+    const status = 'Dispatched'
+    const args = { id: order._id, status }
+    const updatedOrder = await changeOrderStatusResolver(null, args, {
+      user: savedUser,
+    })
+
+    expect(updatedOrder).toHaveProperty('_id')
+    expect(updatedOrder).toHaveProperty('status')
+    expect(updatedOrder.status).not.toBe(order.status)
+    expect(updatedOrder.status).toBe(status)
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await Order.findByIdAndRemove(order._id)
+    await User.findByIdAndUpdate(user._id, {
+      $pull: { address: address._id, order: order._id },
+    })
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+  })
+
+  it('Should not alter any other field', async () => {
+    expect.assertions(17)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const { _id, size, actualPrice, tax, discount } = product
+      const sizeIndex = Math.floor(Math.random() * size.length)
+      const { label, quantityAvailable } = size[sizeIndex]
+      return {
+        product: _id,
+        size: label,
+        quantity: quantityAvailable - 2,
+        actualPrice,
+        tax,
+        discount,
+      }
+    })
+
+    // Get address for the order to be delivered to.
+    const address = await Address.create(dummyAddress)
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Add the order to the database manually.
+    const orderArgs = merge(dummyOrder, {
+      products: orderProducts,
+      shippingAddress: address._id,
+    })
+    const order = await Order.create(orderArgs)
+    const savedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $push: { order: order._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Actual test begins.
+    const status = 'Delivered'
+    const args = { id: order._id, status }
+    const updatedOrder = await changeOrderStatusResolver(null, args, {
+      user: savedUser,
+    })
+
+    expect(updatedOrder).toHaveProperty('_id')
+    expect(updatedOrder._id).toEqual(order._id)
+    expect(updatedOrder).toHaveProperty('products')
+    expect(updatedOrder.products).toHaveLength(order.products.length)
+
+    for (let i = 0; i < updatedOrder.products.length; i += 1) {
+      expect(
+        JSON.parse(JSON.stringify(updatedOrder.products[i]))
+      ).toMatchObject(JSON.parse(JSON.stringify(order.products[i])))
+    }
+
+    expect(updatedOrder).toHaveProperty('payment')
+    expect(updatedOrder.payment).toHaveProperty('status')
+    expect(updatedOrder.payment.status).toBe(order.payment.status)
+    expect(updatedOrder.payment).toHaveProperty('mode')
+    expect(updatedOrder.payment.mode).toBe(order.payment.mode)
+    expect(updatedOrder.payment).toHaveProperty('transactionID')
+    expect(updatedOrder.payment.transactionID).toEqual(
+      order.payment.transactionID
+    )
+    expect(updatedOrder).toHaveProperty('shippingAddress')
+    expect(updatedOrder.shippingAddress).toEqual(order.shippingAddress)
+    expect(updatedOrder).toHaveProperty('orderedAt')
+    expect(updatedOrder.orderedAt).toEqual(order.orderedAt)
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await Order.findByIdAndRemove(order._id)
+    await User.findByIdAndUpdate(user._id, {
+      $pull: { address: address._id, order: order._id },
+    })
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+  })
+
+  it('Should not change the status of an order when there is no user', async () => {
+    expect.assertions(1)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const { _id, size, actualPrice, tax, discount } = product
+      const sizeIndex = Math.floor(Math.random() * size.length)
+      const { label, quantityAvailable } = size[sizeIndex]
+      return {
+        product: _id,
+        size: label,
+        quantity: quantityAvailable - 2,
+        actualPrice,
+        tax,
+        discount,
+      }
+    })
+
+    // Get address for the order to be delivered to.
+    const address = await Address.create(dummyAddress)
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Add the order to the database manually.
+    const orderArgs = merge(dummyOrder, {
+      products: orderProducts,
+      shippingAddress: address._id,
+    })
+    const order = await Order.create(orderArgs)
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { order: order._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Actual test begins.
+    const status = 'Delivered'
+    const args = { id: order._id, status }
+    await expect(changeOrderStatusResolver(null, args, {})).rejects.toThrow(
+      'Unauthorized'
+    )
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await Order.findByIdAndRemove(order._id)
+    await User.findByIdAndUpdate(user._id, {
+      $pull: { address: address._id, order: order._id },
+    })
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+  })
+
+  it('Should not change the status of an order when status is invalid', async () => {
+    expect.assertions(1)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const { _id, size, actualPrice, tax, discount } = product
+      const sizeIndex = Math.floor(Math.random() * size.length)
+      const { label, quantityAvailable } = size[sizeIndex]
+      return {
+        product: _id,
+        size: label,
+        quantity: quantityAvailable - 2,
+        actualPrice,
+        tax,
+        discount,
+      }
+    })
+
+    // Get address for the order to be delivered to.
+    const address = await Address.create(dummyAddress)
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Add the order to the database manually.
+    const orderArgs = merge(dummyOrder, {
+      products: orderProducts,
+      shippingAddress: address._id,
+    })
+    const order = await Order.create(orderArgs)
+    const savedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $push: { order: order._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Actual test begins. No status provided.
+    const args = { id: order._id }
+    await expect(
+      changeOrderStatusResolver(null, args, { user: savedUser })
+    ).rejects.toThrow('Invalid status')
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await Order.findByIdAndRemove(order._id)
+    await User.findByIdAndUpdate(user._id, {
+      $pull: { address: address._id, order: order._id },
+    })
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+  })
+
+  it('Should not change the status of an order when status is not one of the defined values', async () => {
+    expect.assertions(1)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const { _id, size, actualPrice, tax, discount } = product
+      const sizeIndex = Math.floor(Math.random() * size.length)
+      const { label, quantityAvailable } = size[sizeIndex]
+      return {
+        product: _id,
+        size: label,
+        quantity: quantityAvailable - 2,
+        actualPrice,
+        tax,
+        discount,
+      }
+    })
+
+    // Get address for the order to be delivered to.
+    const address = await Address.create(dummyAddress)
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Add the order to the database manually.
+    const orderArgs = merge(dummyOrder, {
+      products: orderProducts,
+      shippingAddress: address._id,
+    })
+    const order = await Order.create(orderArgs)
+    const savedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $push: { order: order._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Actual test begins. No status provided.
+    const status = 'Molestias veritatis quis laborum'
+    const args = { id: order._id, status }
+    await expect(
+      changeOrderStatusResolver(null, args, { user: savedUser })
+    ).rejects.toThrowError(ValidationError)
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await Order.findByIdAndRemove(order._id)
+    await User.findByIdAndUpdate(user._id, {
+      $pull: { address: address._id, order: order._id },
+    })
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+  })
+
+  it('Should not change the status of an order when order ID is invalid', async () => {
+    expect.assertions(1)
+    const savedUser = await User.findById(user._id)
+    const status = 'On its way'
+    const args = { id: new Types.ObjectId(), status }
+    await expect(
+      changeOrderStatusResolver(null, args, { user: savedUser })
+    ).toMatchObject({})
   })
 })

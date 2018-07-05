@@ -272,15 +272,17 @@ const changeOrderStatusResolver = async (parent, args, context) => {
   }
 
   try {
-    // Find the order.
-    const order = await Order.findByIdAndUpdate(
-      args.id,
-      {
-        status: args.status,
-      },
+    const { id, status } = args
+    if (!status || typeof status !== 'string') {
+      throw new Error('Invalid status')
+    }
+
+    // Find the order and change the status.
+    return await Order.findByIdAndUpdate(
+      id,
+      { status },
       { new: true, runValidators: true }
     )
-    return order
   } catch (err) {
     throw err
   }
