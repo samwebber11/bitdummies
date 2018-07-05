@@ -9,6 +9,7 @@ import User from '../../database/models/user'
 import {
   addOrderResolver,
   cancelOrderResolver,
+  removeProductFromOrderResolver,
 } from '../../graphql/resolvers/orderResolvers'
 import { merge, shuffleArray } from '../../utils'
 import { connectMongoose, disconnectMongoose } from '../helper'
@@ -737,6 +738,7 @@ describe('cancelOrder resolver', () => {
   })
 
   it('Should not remove an order when there is no user', async () => {
+    expect.assertions(1)
     // Get products to be added to the order.
     const products = await Product.insertMany([
       dummyProduct1,
@@ -979,5 +981,619 @@ describe('cancelOrder resolver', () => {
     })
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
+  })
+})
+
+describe('removeProductFromOrder resolver', () => {
+  const user = {
+    _id: '5b39f7bb26670102359a8c10',
+  }
+
+  const dummyProduct1 = {
+    name: 'Handcrafted Plastic Computer',
+    size: [
+      {
+        label: 'XS',
+        quantityAvailable: 5,
+      },
+      {
+        label: 'M',
+        quantityAvailable: 10,
+      },
+    ],
+    actualPrice: 984.99,
+    imagePath: [
+      'Optio labore laudantium et et a eaque sed',
+      'Neque non ullam nam qui corrupti similique officia aut quis',
+      'Et explicabo aut dicta',
+    ],
+  }
+
+  const dummyProduct2 = {
+    name: 'Unbranded Soft Hat',
+    size: [
+      {
+        label: 'L',
+        quantityAvailable: 10,
+      },
+      {
+        label: 'XL',
+        quantityAvailable: 15,
+      },
+    ],
+    actualPrice: 702.99,
+    imagePath: [
+      'Aspernatur est similique blanditiis aut et sit',
+      'Commodi quod officia recusandae',
+      'Alias dolor consequatur ab rerum quia rerum inventore',
+      'Adipisci iure veniam',
+    ],
+  }
+
+  const dummyProduct3 = {
+    name: 'Tasty Wooden Pizza',
+    size: [
+      {
+        label: 'S',
+        quantityAvailable: 10,
+      },
+      {
+        label: 'L',
+        quantityAvailable: 5,
+      },
+      {
+        label: 'XL',
+        quantityAvailable: 15,
+      },
+    ],
+    actualPrice: 888.99,
+    imagePath: [
+      'Sunt quisquam in beatae',
+      'Quia cumque odit ut voluptatem velit nulla',
+      'Natus dicta minima explicabo earum optio reiciendis provident',
+    ],
+  }
+
+  const dummyAddress = {
+    address1: '7745',
+    address2: 'Harvey Village',
+    landmark: 'Near Darian Common',
+    city: 'Markston',
+    state: 'North Carolina',
+    zip: '10774',
+    country: 'Japan',
+  }
+
+  const dummyOrder = {
+    status: 'Processing',
+    payment: {
+      status: 'Paid',
+      mode: 'E-wallet',
+      transactionID: Math.floor(Math.random() * 1000000 + 1).toString(),
+    },
+    orderedAt: Date.now(),
+  }
+
+  it('Should remove product from the order', async () => {
+    expect.assertions(4)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const { _id, size, actualPrice, tax, discount } = product
+      const sizeIndex = Math.floor(Math.random() * size.length)
+      const { label, quantityAvailable } = size[sizeIndex]
+      return {
+        product: _id,
+        size: label,
+        quantity: quantityAvailable - 2,
+        actualPrice,
+        tax,
+        discount,
+      }
+    })
+
+    // Get address for the order to be delivered to.
+    const address = await Address.create(dummyAddress)
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Add the order to the database manually.
+    const orderArgs = merge(dummyOrder, {
+      products: orderProducts,
+      shippingAddress: address._id,
+    })
+    const order = await Order.create(orderArgs)
+    const savedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $push: { order: order._id } },
+      { new: true, runValidators: true }
+    )
+
+    const productToBeRemoved = shuffleArray(orderProducts)[0]
+    const args = { id: order._id, product: productToBeRemoved.product }
+    const updatedOrder = await removeProductFromOrderResolver(null, args, {
+      user: savedUser,
+    })
+
+    expect(updatedOrder).toHaveProperty('_id')
+    expect(updatedOrder).toHaveProperty('products')
+    expect(updatedOrder.products).toHaveLength(order.products.length - 1)
+    const orderProductIDs = updatedOrder.products.map(
+      product => product.product
+    )
+    expect(orderProductIDs).not.toContain(productToBeRemoved.product)
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await Order.findByIdAndRemove(order._id)
+    await User.findByIdAndUpdate(user._id, {
+      $pull: { address: address._id, order: order._id },
+    })
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+  })
+
+  it('Should not alter any other field', async () => {
+    expect.assertions(15)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const { _id, size, actualPrice, tax, discount } = product
+      const sizeIndex = Math.floor(Math.random() * size.length)
+      const { label, quantityAvailable } = size[sizeIndex]
+      return {
+        product: _id,
+        size: label,
+        quantity: quantityAvailable - 2,
+        actualPrice,
+        tax,
+        discount,
+      }
+    })
+
+    // Get address for the order to be delivered to.
+    const address = await Address.create(dummyAddress)
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Add the order to the database manually.
+    const orderArgs = merge(dummyOrder, {
+      products: orderProducts,
+      shippingAddress: address._id,
+    })
+    const order = await Order.create(orderArgs)
+    const savedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $push: { order: order._id } },
+      { new: true, runValidators: true }
+    )
+
+    const productToBeRemoved = shuffleArray(orderProducts)[0]
+    const args = { id: order._id, product: productToBeRemoved.product }
+    const updatedOrder = await removeProductFromOrderResolver(null, args, {
+      user: savedUser,
+    })
+
+    expect(updatedOrder).toHaveProperty('_id')
+    expect(updatedOrder._id).toEqual(order._id)
+    expect(updatedOrder).toHaveProperty('status')
+    expect(updatedOrder.status).toBe(order.status)
+    expect(updatedOrder).toHaveProperty('payment')
+    expect(updatedOrder.payment).toHaveProperty('status')
+    expect(updatedOrder.payment.status).toBe(order.payment.status)
+    expect(updatedOrder.payment).toHaveProperty('mode')
+    expect(updatedOrder.payment.mode).toBe(order.payment.mode)
+    expect(updatedOrder.payment).toHaveProperty('transactionID')
+    expect(updatedOrder.payment.transactionID).toEqual(
+      order.payment.transactionID
+    )
+    expect(updatedOrder).toHaveProperty('shippingAddress')
+    expect(updatedOrder.shippingAddress).toEqual(order.shippingAddress)
+    expect(updatedOrder).toHaveProperty('orderedAt')
+    expect(updatedOrder.orderedAt).toEqual(order.orderedAt)
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await Order.findByIdAndRemove(order._id)
+    await User.findByIdAndUpdate(user._id, {
+      $pull: { address: address._id, order: order._id },
+    })
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+  })
+
+  it('Should not remove a product from an order when there is no user', async () => {
+    expect.assertions(1)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const { _id, size, actualPrice, tax, discount } = product
+      const sizeIndex = Math.floor(Math.random() * size.length)
+      const { label, quantityAvailable } = size[sizeIndex]
+      return {
+        product: _id,
+        size: label,
+        quantity: quantityAvailable - 2,
+        actualPrice,
+        tax,
+        discount,
+      }
+    })
+
+    // Get address for the order to be delivered to.
+    const address = await Address.create(dummyAddress)
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Add the order to the database manually.
+    const orderArgs = merge(dummyOrder, {
+      products: orderProducts,
+      shippingAddress: address._id,
+    })
+    const order = await Order.create(orderArgs)
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { order: order._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Actual test begins.
+    const productToBeRemoved = shuffleArray(orderProducts)[0]
+    const args = { id: order._id, product: productToBeRemoved.product }
+    await expect(
+      removeProductFromOrderResolver(null, args, {})
+    ).rejects.toThrow('Must be logged in')
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await Order.findByIdAndRemove(order._id)
+    await User.findByIdAndUpdate(user._id, {
+      $pull: { address: address._id, order: order._id },
+    })
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+  })
+
+  it('Should not remove a product from an order when order ID is invalid', async () => {
+    expect.assertions(1)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const { _id, size, actualPrice, tax, discount } = product
+      const sizeIndex = Math.floor(Math.random() * size.length)
+      const { label, quantityAvailable } = size[sizeIndex]
+      return {
+        product: _id,
+        size: label,
+        quantity: quantityAvailable - 2,
+        actualPrice,
+        tax,
+        discount,
+      }
+    })
+
+    // Get address for the order to be delivered to.
+    const address = await Address.create(dummyAddress)
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Add the order to the database manually.
+    const orderArgs = merge(dummyOrder, {
+      products: orderProducts,
+      shippingAddress: address._id,
+    })
+    const order = await Order.create(orderArgs)
+    const savedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $push: { order: order._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Actual test begins.
+    const productToBeRemoved = shuffleArray(orderProducts)[0]
+    const args = {
+      id: new Types.ObjectId(),
+      product: productToBeRemoved.product,
+    }
+    await expect(
+      removeProductFromOrderResolver(null, args, { user: savedUser })
+    ).rejects.toThrow('Invalid order')
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await Order.findByIdAndRemove(order._id)
+    await User.findByIdAndUpdate(user._id, {
+      $pull: { address: address._id, order: order._id },
+    })
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+  })
+
+  it(`Should not remove a product from an order when its status is not 'Processing'`, async () => {
+    expect.assertions(3)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const { _id, size, actualPrice, tax, discount } = product
+      const sizeIndex = Math.floor(Math.random() * size.length)
+      const { label, quantityAvailable } = size[sizeIndex]
+      return {
+        product: _id,
+        size: label,
+        quantity: quantityAvailable - 2,
+        actualPrice,
+        tax,
+        discount,
+      }
+    })
+
+    // Get address for the order to be delivered to.
+    const address = await Address.create(dummyAddress)
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Add the order to the database manually.
+    const orderArgs = merge(dummyOrder, {
+      products: orderProducts,
+      shippingAddress: address._id,
+    })
+
+    const order1Args = merge(orderArgs, { status: 'Dispatched' })
+    const order2Args = merge(orderArgs, { status: 'On its way' })
+    const order3Args = merge(orderArgs, { status: 'Delivered' })
+
+    const order1 = await Order.create(order1Args)
+    const order2 = await Order.create(order2Args)
+    const order3 = await Order.create(order3Args)
+
+    const orderIDs = [order1._id, order2._id, order3._id]
+
+    const savedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $push: { order: { $each: orderIDs } } },
+      { new: true, runValidators: true }
+    )
+
+    // Actual test begins.
+    const productToBeRemoved = shuffleArray(orderProducts)[0]
+    await Promise.all(
+      orderIDs.map(async orderID => {
+        await expect(
+          removeProductFromOrderResolver(
+            null,
+            { id: orderID, product: productToBeRemoved._id },
+            { user: savedUser }
+          )
+        ).rejects.toThrow('Order items cannot be changed now')
+      })
+    )
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await User.findByIdAndUpdate(user._id, {
+      $pull: { address: address._id, order: { $in: orderIDs } },
+    })
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+    await Order.deleteMany({ _id: { $in: orderIDs } })
+  })
+
+  it(`Should not remove a product from an order when the order doesn't belong to the user`, async () => {
+    expect.assertions(1)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const { _id, size, actualPrice, tax, discount } = product
+      const sizeIndex = Math.floor(Math.random() * size.length)
+      const { label, quantityAvailable } = size[sizeIndex]
+      return {
+        product: _id,
+        size: label,
+        quantity: quantityAvailable - 2,
+        actualPrice,
+        tax,
+        discount,
+      }
+    })
+
+    // Get address for the order to be delivered to.
+    const address = await Address.create(dummyAddress)
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Add the order to the database manually but do not save the
+    // order ID to the user's list of orders.
+    const orderArgs = merge(dummyOrder, {
+      products: orderProducts,
+      shippingAddress: address._id,
+    })
+    const order = await Order.create(orderArgs)
+    const savedUser = await User.findById(user._id)
+
+    const productToBeRemoved = shuffleArray(orderProducts)[0]
+    const args = {
+      id: order._id,
+      product: productToBeRemoved.product,
+    }
+    await expect(
+      removeProductFromOrderResolver(null, args, { user: savedUser })
+    ).rejects.toThrow('Order does not belong to the current user')
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await Order.findByIdAndRemove(order._id)
+    await User.findByIdAndUpdate(user._id, {
+      $pull: { address: address._id, order: order._id },
+    })
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+  })
+
+  it('Should not remove a product from an order when product ID is invalid', async () => {
+    expect.assertions(1)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const { _id, size, actualPrice, tax, discount } = product
+      const sizeIndex = Math.floor(Math.random() * size.length)
+      const { label, quantityAvailable } = size[sizeIndex]
+      return {
+        product: _id,
+        size: label,
+        quantity: quantityAvailable - 2,
+        actualPrice,
+        tax,
+        discount,
+      }
+    })
+
+    // Get address for the order to be delivered to.
+    const address = await Address.create(dummyAddress)
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Add the order to the database manually.
+    const orderArgs = merge(dummyOrder, {
+      products: orderProducts,
+      shippingAddress: address._id,
+    })
+    const order = await Order.create(orderArgs)
+    const savedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $push: { order: order._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Actual test begins.
+    const args = { id: order._id, product: new Types.ObjectId() }
+    await expect(
+      removeProductFromOrderResolver(null, args, { user: savedUser })
+    ).rejects.toThrow('Invalid product')
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await Order.findByIdAndRemove(order._id)
+    await User.findByIdAndUpdate(user._id, {
+      $pull: { address: address._id, order: order._id },
+    })
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+  })
+
+  it('Should not remove a product from an order when product ID is not contained in the order', async () => {
+    expect.assertions(1)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const { _id, size, actualPrice, tax, discount } = product
+      const sizeIndex = Math.floor(Math.random() * size.length)
+      const { label, quantityAvailable } = size[sizeIndex]
+      return {
+        product: _id,
+        size: label,
+        quantity: quantityAvailable - 2,
+        actualPrice,
+        tax,
+        discount,
+      }
+    })
+
+    // Get address for the order to be delivered to.
+    const address = await Address.create(dummyAddress)
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Add the order to the database manually.
+    const orderArgs = merge(dummyOrder, {
+      products: orderProducts,
+      shippingAddress: address._id,
+    })
+    const order = await Order.create(orderArgs)
+    const savedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $push: { order: order._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Actual test begins.
+    const unorderedProduct = await Product.create(dummyProduct1)
+    const args = { id: order._id, product: unorderedProduct._id }
+    await expect(
+      removeProductFromOrderResolver(null, args, { user: savedUser })
+    ).rejects.toThrow('Product not found in order')
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await Order.findByIdAndRemove(order._id)
+    await User.findByIdAndUpdate(user._id, {
+      $pull: { address: address._id, order: order._id },
+    })
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+    await Product.findByIdAndRemove(unorderedProduct._id)
   })
 })

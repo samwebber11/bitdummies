@@ -209,7 +209,7 @@ const removeProductFromOrderResolver = async (parent, args, context) => {
       throw new Error('Invalid order')
     }
     if (order.status !== 'Processing') {
-      throw new Error('Order cannot be cancelled now')
+      throw new Error('Order items cannot be changed now')
     }
 
     // Check to see if the order is in the user's list of orders.
@@ -230,7 +230,7 @@ const removeProductFromOrderResolver = async (parent, args, context) => {
     const productIndex = order.products.findIndex(
       pro => pro.product.toString() === args.product.toString()
     )
-    if (!productIndex) {
+    if (productIndex === -1) {
       throw new Error('Product not found in order')
     }
 
