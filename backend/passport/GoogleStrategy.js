@@ -33,7 +33,7 @@ const GoogleStrategy = new OAuth2Strategy(
         lastName: familyName,
       })
       if (!newUser) {
-        console.log('Error! Saving the new Google user: ', err)
+        console.log('Error! Saving the new Google user: ')
         return done(null, false)
       }
       return done(null, newUser)
