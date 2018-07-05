@@ -1,6 +1,7 @@
 import Order from '../../database/models/order'
 import Product from '../../database/models/product'
 import Address from '../../database/models/address'
+import User from '../../database/models/user'
 
 const addOrderResolver = async (parent, args, context) => {
   const { user } = context
@@ -134,7 +135,7 @@ const addOrderResolver = async (parent, args, context) => {
 const cancelOrderResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
-    throw new Error('Msut be logged in')
+    throw new Error('Must be logged in')
   }
 
   try {
@@ -148,7 +149,9 @@ const cancelOrderResolver = async (parent, args, context) => {
     }
 
     // Check to see if the order is in the user's list of orders.
-    const orderIndex = user.order.indexOf(args.id)
+    const orderIndex = user.order.findIndex(
+      userOrder => userOrder.toString() === args.id.toString()
+    )
     if (orderIndex === -1) {
       throw new Error('Order does not belong to the current user')
     }
@@ -184,8 +187,7 @@ const cancelOrderResolver = async (parent, args, context) => {
     )
 
     // Remove the order from the user's list of orders and save to the database.
-    user.order.splice(orderIndex, 1)
-    await user.save()
+    await User.findByIdAndUpdate(user._id, { $pull: { order: order._id } })
 
     // Remove the order from the database.
     return await Order.findByIdAndRemove(args.id)
