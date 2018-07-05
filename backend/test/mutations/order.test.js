@@ -1,12 +1,14 @@
 /* eslint-env jest */
 
+import { Types } from 'mongoose'
+
 import Address from '../../database/models/address'
+import Order from '../../database/models/order'
 import Product from '../../database/models/product'
 import User from '../../database/models/user'
 import { addOrderResolver } from '../../graphql/resolvers/orderResolvers'
 import { shuffleArray } from '../../utils'
 import { connectMongoose, disconnectMongoose } from '../helper'
-import Order from '../../database/models/order'
 
 beforeAll(connectMongoose)
 afterAll(disconnectMongoose)
@@ -92,6 +94,8 @@ describe('addOrder resolver', () => {
   }
 
   it(`Should add an order to user's list of orders`, async () => {
+    expect.assertions(25)
+
     // Get products to be added to the order.
     const products = await Product.insertMany([
       dummyProduct1,
@@ -113,30 +117,354 @@ describe('addOrder resolver', () => {
     const address = await new Address(dummyAddress).save()
     const savedUser = await User.findByIdAndUpdate(
       user._id,
-      {
-        $push: { address: address._id },
-      },
+      { $push: { address: address._id } },
       { new: true, runValidators: true }
     )
 
-    const orderArgs = { products: orderProducts, shippingAddress: address }
+    const orderArgs = { products: orderProducts, shippingAddress: address._id }
     const order = await addOrderResolver(null, orderArgs, { user: savedUser })
 
     expect(order).toHaveProperty('_id')
+    expect(order).toHaveProperty('products')
+    expect(order.products).toHaveLength(2)
+
+    // order.products.length will be 2
+    for (let i = 0; i < 2; i += 1) {
+      expect(order.products[i]).toHaveProperty('quantity')
+      expect(order.products[i]).toHaveProperty('actualPrice')
+      expect(order.products[i]).toHaveProperty('tax')
+      expect(order.products[i]).toHaveProperty('discount')
+      expect(order.products[i]).toHaveProperty('discountedPrice')
+      expect(order.products[i]).toHaveProperty('size')
+      expect(order.products[i]).toMatchObject(orderProducts[i])
+    }
+
+    expect(order).toHaveProperty('status')
+    expect(order.status).toBe('Processing')
+    expect(order).toHaveProperty('payment')
+    expect(order.payment).toHaveProperty('status')
+    expect(order.payment.status).toBe('Paid')
+    expect(order).toHaveProperty('shippingAddress')
+    expect(order.shippingAddress).toEqual(address._id)
+    expect(order).toHaveProperty('orderedAt')
 
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    const updatedUser = await User.findById(user._id)
-    const addressIndex = updatedUser.address.findIndex(
-      userAddress => userAddress.toString() === address._id.toString()
+    await User.findByIdAndUpdate(user._id, {
+      $pull: { address: address._id, order: order._id },
+    })
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+  })
+
+  it('Should not add an order when there is no user', async () => {
+    expect.assertions(1)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const sizeIndex = Math.floor(Math.random() * product.size.length)
+      const { label, quantityAvailable } = product.size[sizeIndex]
+      return {
+        product: product._id,
+        size: label,
+        quantity: quantityAvailable - 2,
+      }
+    })
+
+    // Get address for the order to be delivered to.
+    const address = await new Address(dummyAddress).save()
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
     )
-    updatedUser.address.splice(addressIndex, 1)
-    const orderIndex = updatedUser.order.findIndex(
-      userOrder => userOrder.toString() === order._id.toString()
+
+    const orderArgs = { products: orderProducts, shippingAddress: address._id }
+    await expect(addOrderResolver(null, orderArgs, {})).rejects.toThrow(
+      'Must be logged in'
     )
-    updatedUser.order.splice(orderIndex, 1)
-    await updatedUser.save()
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await User.findByIdAndUpdate(user._id, { $pull: { address: address._id } })
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+  })
+
+  it(`Should not add an order when products aren't provided`, async () => {
+    expect.assertions(1)
+    // Get address for the order to be delivered to.
+    const address = await new Address(dummyAddress).save()
+    const savedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    const orderArgs = { shippingAddress: address._id }
+    await expect(
+      addOrderResolver(null, orderArgs, { user: savedUser })
+    ).rejects.toThrow('Must have at least one product')
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await User.findByIdAndUpdate(user._id, { $pull: { address: address._id } })
+  })
+
+  it(`Should not add an order when 'products' field is an empty array`, async () => {
+    expect.assertions(1)
+    // Get address for the order to be delivered to.
+    const address = await Address.create(dummyAddress)
+    const savedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    const orderArgs = { products: [], shippingAddress: address._id }
+    await expect(
+      addOrderResolver(null, orderArgs, { user: savedUser })
+    ).rejects.toThrow('Must have at least one product')
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await User.findByIdAndUpdate(user._id, { $pull: { address: address._id } })
+  })
+
+  it(`Should not add an order when 'products' field is invalid`, async () => {
+    expect.assertions(1)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const sizeIndex = Math.floor(Math.random() * product.size.length)
+      const { label, quantityAvailable } = product.size[sizeIndex]
+      return {
+        product: new Types.ObjectId(),
+        size: label,
+        quantity: quantityAvailable - 2,
+      }
+    })
+
+    // Get address for the order to be delivered to.
+    const address = await new Address(dummyAddress).save()
+    const savedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    const orderArgs = { products: orderProducts, shippingAddress: address._id }
+    await expect(
+      addOrderResolver(null, orderArgs, { user: savedUser })
+    ).rejects.toThrow('Products not in database')
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await User.findByIdAndUpdate(user._id, { $pull: { address: address._id } })
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+  })
+
+  it('Should not add an order when quantity of a product is more than available quantity', async () => {
+    expect.assertions(1)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const sizeIndex = Math.floor(Math.random() * product.size.length)
+      const { label, quantityAvailable } = product.size[sizeIndex]
+      return {
+        product: product._id,
+        size: label,
+        quantity: quantityAvailable - 2,
+      }
+    })
+    orderProducts[0].quantity += 3 // 1 more than available quantity
+
+    // Get address for the order to be delivered to.
+    const address = await new Address(dummyAddress).save()
+    const savedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    const orderArgs = { products: orderProducts, shippingAddress: address._id }
+    await expect(
+      addOrderResolver(null, orderArgs, { user: savedUser })
+    ).rejects.toThrow('Quantity limit exceeded')
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await User.findByIdAndUpdate(user._id, { $pull: { address: address._id } })
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+  })
+
+  it(`Should not add an order when 'address' field is invalid`, async () => {
+    expect.assertions(1)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const sizeIndex = Math.floor(Math.random() * product.size.length)
+      const { label, quantityAvailable } = product.size[sizeIndex]
+      return {
+        product: product._id,
+        size: label,
+        quantity: quantityAvailable - 2,
+      }
+    })
+
+    // Get address for the order to be delivered to.
+    const address = new Types.ObjectId()
+    const savedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    const orderArgs = { products: orderProducts, shippingAddress: address._id }
+    await expect(
+      addOrderResolver(null, orderArgs, { user: savedUser })
+    ).rejects.toThrow('Invalid address')
+
+    // Cleanup.
+    await User.findByIdAndUpdate(user._id, { $pull: { address: address._id } })
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+  })
+
+  it(`Should not add an order when address doesn't belong to the user`, async () => {
+    expect.assertions(1)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const sizeIndex = Math.floor(Math.random() * product.size.length)
+      const { label, quantityAvailable } = product.size[sizeIndex]
+      return {
+        product: product._id,
+        size: label,
+        quantity: quantityAvailable - 2,
+      }
+    })
+
+    // Get address for the order to be delivered to but not added
+    // to user's list of addresses.
+    const address = await Address.create(dummyAddress)
+    const savedUser = await User.findById(user._id)
+
+    const orderArgs = { products: orderProducts, shippingAddress: address._id }
+    await expect(
+      addOrderResolver(null, orderArgs, { user: savedUser })
+    ).rejects.toThrow('Address is not associated with user')
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
+  })
+
+  it(`Should ignore the prices and discounts for the products provided to it and use the ones in the database`, async () => {
+    expect.assertions(39)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const sizeIndex = Math.floor(Math.random() * product.size.length)
+      const { label, quantityAvailable } = product.size[sizeIndex]
+      return {
+        product: product._id,
+        size: label,
+        quantity: quantityAvailable - 2,
+        actualPrice: 0, // Vicious field.
+      }
+    })
+
+    // Get address for the order to be delivered to.
+    const address = await new Address(dummyAddress).save()
+    const savedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
+    const orderArgs = { products: orderProducts, shippingAddress: address._id }
+    const order = await addOrderResolver(null, orderArgs, { user: savedUser })
+
+    expect(order).toHaveProperty('_id')
+    expect(order).toHaveProperty('products')
+    expect(order.products).toHaveLength(2)
+
+    // order.products.length will be 2
+    for (let i = 0; i < 2; i += 1) {
+      expect(order.products[i]).toHaveProperty('quantity')
+      expect(order.products[i].quantity).toBe(orderProducts[i].quantity)
+
+      expect(order.products[i]).toHaveProperty('actualPrice')
+      const product = shuffledProducts.find(
+        pro => pro._id === order.products[i].product
+      )
+      expect(order.products[i].actualPrice).toBe(product.actualPrice)
+
+      expect(order.products[i]).toHaveProperty('tax')
+      expect(order.products[i].tax).toBe(product.tax)
+      expect(order.products[i]).toHaveProperty('discount')
+      expect(order.products[i].discount).toBe(product.discount)
+      expect(order.products[i]).toHaveProperty('discountedPrice')
+      expect(order.products[i].discountedPrice).toBeCloseTo(
+        parseFloat(product.discountedPrice)
+      )
+
+      expect(order.products[i]).toHaveProperty('size')
+      expect(order.products[i].size).toBe(orderProducts[i].size)
+      expect(order.products[i]).toHaveProperty('quantity')
+      expect(order.products[i].quantity).toBe(orderProducts[i].quantity)
+    }
+
+    expect(order).toHaveProperty('status')
+    expect(order.status).toBe('Processing')
+    expect(order).toHaveProperty('payment')
+    expect(order.payment).toHaveProperty('status')
+    expect(order.payment.status).toBe('Paid')
+    expect(order).toHaveProperty('shippingAddress')
+    expect(order.shippingAddress).toEqual(address._id)
+    expect(order).toHaveProperty('orderedAt')
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await Order.findByIdAndRemove(order._id)
+    await User.findByIdAndUpdate(user._id, {
+      $pull: { address: address._id, order: order._id },
+    })
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
