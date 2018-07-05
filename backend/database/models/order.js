@@ -95,11 +95,6 @@ OrderSchema.pre('validate', function(next) {
   next()
 })
 
-OrderSchema.pre('save', function(next) {
-  this.payment.transactionID = (Math.random() * 1000000 + 1).toString()
-  next()
-})
-
 OrderSchema.virtual('total').get(function() {
   return this.products
     .reduce(
