@@ -100,6 +100,17 @@ OrderSchema.pre('save', function(next) {
   next()
 })
 
+OrderSchema.virtual('total').get(function() {
+  return this.products
+    .reduce(
+      (previousTotal, currentProduct) =>
+        previousTotal +
+        (currentProduct.tax / 100 + 1) * currentProduct.discountedPrice,
+      0
+    )
+    .toFixed(2)
+})
+
 const skipInit = process.env.NODE_ENV === 'test'
 
 const Order = mongoose.model('Order', OrderSchema, 'orders', skipInit)
