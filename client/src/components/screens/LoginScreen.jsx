@@ -7,9 +7,12 @@ const LoginScreen = () => (
         <h5 className="card-title">Sign up or log in to BitDummies</h5>
       </div>
       <div className="card-body">
-        <button className="btn btn-lg btn-primary col-md-12 m-2">
+        <a
+          className="btn btn-lg btn-primary col-md-12 m-2"
+          href="https://localhost:3001/auth/facebook"
+        >
           Continue with Facebook
-        </button>
+        </a>
         <a
           className="btn btn-lg btn-danger col-md-12 m-2"
           href="https://localhost:3001/auth/google"

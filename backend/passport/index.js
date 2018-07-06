@@ -1,6 +1,7 @@
 import passport from 'passport'
 
 import GoogleStrategy from './GoogleStrategy'
+import FacebookStrategy from './FacebookStrategy'
 import User from '../database/models/user'
 
 passport.serializeUser((user, done) => {
@@ -21,5 +22,6 @@ passport.deserializeUser(async (id, done) => {
 
 // Register strategy.
 passport.use(GoogleStrategy)
+passport.use(FacebookStrategy)
 
 export default passport
