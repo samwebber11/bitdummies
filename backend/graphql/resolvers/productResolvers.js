@@ -128,7 +128,6 @@ const updateProductQuantityResolver = async (parent, args, context) => {
     )
     return product
   } catch (err) {
-    console.log('Error')
     throw err
   }
 }
