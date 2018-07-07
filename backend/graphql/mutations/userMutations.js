@@ -6,6 +6,7 @@ import {
   addUserResolver,
   removeUserResolver,
   updateUserResolver,
+  changeUserRoleResolver,
 } from '../resolvers/userResolvers'
 
 // This mutation is not required.
@@ -64,4 +65,19 @@ const updateUser = {
   resolve: updateUserResolver,
 }
 
-export { addUser, removeUser, updateUser }
+const changeUserRole = {
+  type: UserType,
+  args: {
+    id: {
+      type: new GraphQLNonNull(GraphQLID),
+    },
+    roles: {
+      type: new GraphQLNonNull(
+        new GraphQLList(new GraphQLNonNull(GraphQLString))
+      ),
+    },
+  },
+  resolve: changeUserRoleResolver,
+}
+
+export { addUser, removeUser, updateUser, changeUserRole }

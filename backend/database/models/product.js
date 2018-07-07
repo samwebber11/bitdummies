@@ -1,4 +1,4 @@
-import mongoose, { ValidationError } from 'mongoose'
+import mongoose from 'mongoose'
 import float from 'mongoose-float'
 
 const { Schema } = mongoose
@@ -115,28 +115,6 @@ ProductSchema.virtual('discountedPrice').get(function() {
   const discountedPrice =
     this.actualPrice - (this.actualPrice * this.discount) / 100
   return discountedPrice.toFixed(2)
-})
-
-ProductSchema.pre('findOneAndUpdate', function(next) {
-  const { size, imagePath } = this.getUpdate()
-
-  if (size) {
-    if (!sizeLength(size)) {
-      throw new ValidationError('Must have at least one valid size')
-    }
-
-    if (!uniqueSize(size)) {
-      throw new ValidationError('Size labels must be unique')
-    }
-  }
-
-  if (imagePath) {
-    if (!validateImages(imagePath)) {
-      throw new ValidationError('Must have at least 1 and at max 5 images')
-    }
-  }
-
-  next()
 })
 
 const skipInit = process.env.NODE_ENV === 'test'
