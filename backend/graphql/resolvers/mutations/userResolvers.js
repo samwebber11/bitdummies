@@ -1,5 +1,5 @@
-import User from '../../database/models/user'
-import { CHANGE_USER_ROLE } from '../../database/operations'
+import User from '../../../database/models/user'
+import { CHANGE_USER_ROLE } from '../../../database/operations'
 
 // This resolver is not required.
 const addUserResolver = async (parent, args, context) => {

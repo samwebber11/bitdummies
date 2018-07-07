@@ -1,8 +1,8 @@
 import { Types } from 'mongoose'
 
-import Address from '../../database/models/address'
-import User from '../../database/models/user'
-import { pick } from '../../utils'
+import Address from '../../../database/models/address'
+import User from '../../../database/models/user'
+import { pick } from '../../../utils'
 
 const addAddressResolver = async (parent, args, context) => {
   const { user } = context

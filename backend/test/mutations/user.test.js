@@ -6,7 +6,7 @@ import User from '../../database/models/user'
 import {
   updateUserResolver,
   changeUserRoleResolver,
-} from '../../graphql/resolvers/userResolvers'
+} from '../../graphql/resolvers/mutations/userResolvers'
 import { merge } from '../../utils'
 import { connectMongoose, disconnectMongoose } from '../helper'
 

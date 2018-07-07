@@ -15,7 +15,7 @@ import {
   updateProductInfoResolver,
   updateProductImagesResolver,
   updateProductQuantityResolver,
-} from '../resolvers/productResolvers'
+} from '../resolvers/mutations/productResolvers'
 
 const addProduct = {
   type: ProductType,
