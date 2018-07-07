@@ -1,7 +1,7 @@
-import Order from '../../database/models/order'
-import Product from '../../database/models/product'
-import Address from '../../database/models/address'
-import User from '../../database/models/user'
+import Order from '../../../database/models/order'
+import Product from '../../../database/models/product'
+import Address from '../../../database/models/address'
+import User from '../../../database/models/user'
 
 const addOrderResolver = async (parent, args, context) => {
   const { user } = context

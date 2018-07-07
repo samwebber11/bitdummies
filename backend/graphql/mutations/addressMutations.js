@@ -5,7 +5,7 @@ import {
   addAddressResolver,
   removeAddressResolver,
   updateAddressResolver,
-} from '../resolvers/addressResolvers'
+} from '../resolvers/mutations/addressResolvers'
 
 const addAddress = {
   type: AddressType,

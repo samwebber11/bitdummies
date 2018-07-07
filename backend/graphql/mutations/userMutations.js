@@ -7,7 +7,7 @@ import {
   removeUserResolver,
   updateUserResolver,
   changeUserRoleResolver,
-} from '../resolvers/userResolvers'
+} from '../resolvers/mutations/userResolvers'
 
 // This mutation is not required.
 const addUser = {
