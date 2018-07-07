@@ -7,7 +7,7 @@ import {
   cancelOrderResolver,
   removeProductFromOrderResolver,
   changeOrderStatusResolver,
-} from '../resolvers/orderResolvers'
+} from '../resolvers/mutations/orderResolvers'
 
 const addOrder = {
   type: OrderType,

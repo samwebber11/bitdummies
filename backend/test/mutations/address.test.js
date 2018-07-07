@@ -9,7 +9,7 @@ import {
   addAddressResolver,
   removeAddressResolver,
   updateAddressResolver,
-} from '../../graphql/resolvers/addressResolvers'
+} from '../../graphql/resolvers/mutations/addressResolvers'
 import { merge } from '../../utils'
 import { connectMongoose, disconnectMongoose } from '../helper'
 

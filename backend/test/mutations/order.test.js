@@ -11,7 +11,7 @@ import {
   cancelOrderResolver,
   removeProductFromOrderResolver,
   changeOrderStatusResolver,
-} from '../../graphql/resolvers/orderResolvers'
+} from '../../graphql/resolvers/mutations/orderResolvers'
 import { merge, shuffleArray } from '../../utils'
 import { connectMongoose, disconnectMongoose } from '../helper'
 

@@ -10,7 +10,7 @@ import {
   updateProductInfoResolver,
   updateProductImagesResolver,
   updateProductQuantityResolver,
-} from '../../graphql/resolvers/productResolvers'
+} from '../../graphql/resolvers/mutations/productResolvers'
 import { merge, pick } from '../../utils'
 import { connectMongoose, disconnectMongoose } from '../helper'
 

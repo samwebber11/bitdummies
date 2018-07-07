@@ -14,7 +14,7 @@ import {
   updateProductImages,
   updateProductQuantity,
 } from './productMutations'
-import { updateUser } from './userMutations'
+import { updateUser, changeUserRole } from './userMutations'
 
 const Mutation = new GraphQLObjectType({
   name: 'Mutation',
@@ -32,6 +32,7 @@ const Mutation = new GraphQLObjectType({
     updateProductImages,
     updateProductQuantity,
     updateUser,
+    changeUserRole,
   },
 })
 
