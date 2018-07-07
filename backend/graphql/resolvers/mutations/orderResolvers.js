@@ -2,14 +2,23 @@ import Order from '../../../database/models/order'
 import Product from '../../../database/models/product'
 import Address from '../../../database/models/address'
 import User from '../../../database/models/user'
+import {
+  ADD_ORDER,
+  CANCEL_ORDER,
+  REMOVE_PRODUCT_FROM_ORDER,
+  CHANGE_ORDER_STATUS,
+} from '../../../database/operations'
 
 const addOrderResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
     throw new Error('Must be logged in')
   }
-
   try {
+    // Check if user is Authorized to perform this operation
+    if (!user.isAuthorizedTo(ADD_ORDER)) {
+      throw new Error('Unauthorized')
+    }
     // Make sure products were provided.
     if (!args.products || !args.products.length || args.products.length === 0) {
       throw new Error('Must have at least one product')
@@ -139,6 +148,9 @@ const cancelOrderResolver = async (parent, args, context) => {
   }
 
   try {
+    if (!user.isAuthorizedTo(CANCEL_ORDER)) {
+      throw new Error('Unauthorized')
+    }
     // Find the order and check that its status is 'Processing'.
     const order = await Order.findById(args.id)
     if (!order) {
@@ -203,6 +215,9 @@ const removeProductFromOrderResolver = async (parent, args, context) => {
   }
 
   try {
+    if (!user.isAuthorizedTo(REMOVE_PRODUCT_FROM_ORDER)) {
+      throw new Error('Unauthorized')
+    }
     // Find the order and check that its status is 'Processing'.
     const order = await Order.findById(args.id)
     if (!order) {
@@ -265,13 +280,15 @@ const removeProductFromOrderResolver = async (parent, args, context) => {
 }
 
 const changeOrderStatusResolver = async (parent, args, context) => {
-  // TODO: Check for admin authorization here.
   const { user } = context
   if (!user) {
     throw new Error('Unauthorized')
   }
 
   try {
+    if (!user.isAuthorizedTo(CHANGE_ORDER_STATUS)) {
+      throw new Error('Unauthorized')
+    }
     const { id, status } = args
     if (!status || typeof status !== 'string') {
       throw new Error('Invalid status')

@@ -3,16 +3,23 @@ import { Types } from 'mongoose'
 import Address from '../../../database/models/address'
 import User from '../../../database/models/user'
 import { pick } from '../../../utils'
+import {
+  ADD_ADDRESS,
+  REMOVE_ADDRESS,
+  UPDATE_ADDRESS,
+} from '../../../database/operations'
 
 const addAddressResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
     throw new Error('Must be logged in')
   }
-
   // New address created should have a predefined ID.
   args._id = new Types.ObjectId()
   try {
+    if (!user.isAuthorizedTo(ADD_ADDRESS)) {
+      throw new Error('Unauthorized')
+    }
     // Save address to Address collection.
     const address = await Address(args).save()
     if (!address) {
@@ -42,6 +49,9 @@ const removeAddressResolver = async (parent, args, context) => {
   }
 
   try {
+    if (!user.isAuthorizedTo(REMOVE_ADDRESS)) {
+      throw new Error('Unauthorized')
+    }
     const savedUser = await User.findById(user._id)
     if (!savedUser) {
       throw new Error('Could not find user in User model')
@@ -86,6 +96,9 @@ const updateAddressResolver = async (parent, args, context) => {
   }
 
   try {
+    if (!user.isAuthorizedTo(UPDATE_ADDRESS)) {
+      throw new Error('Unauthorized')
+    }
     const savedUser = await User.findById(user._id).populate('order')
     if (!savedUser) {
       throw new Error('Could not find user in User model')

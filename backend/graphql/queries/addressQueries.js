@@ -9,6 +9,8 @@ import {
 import AddressType from '../types/AddressType'
 import OrderByType from '../types/OrderByType'
 import Address from '../../database/models/address'
+import User from '../../database/models/user'
+import { QUERY_ADDRESS, QUERY_ADDRESSES } from '../../database/operations'
 
 // Fetch all addresses (can be filtered).
 const addresses = {
@@ -44,8 +46,15 @@ const addresses = {
       }),
     },
   },
-  resolve: async (parent, args) => {
+  resolve: async (parent, args, context) => {
+    const { user } = context
+    if (!user) {
+      throw new Error('User is unauthenticated')
+    }
     try {
+      if (!user.isAuthorizedTo(QUERY_ADDRESSES)) {
+        throw new Error('Unauthorized')
+      }
       const addressesList = await Address.find(args.filters).sort(args.orderBy)
       return addressesList
     } catch (err) {
@@ -63,8 +72,15 @@ const address = {
       type: new GraphQLNonNull(GraphQLID),
     },
   },
-  resolve: async (parent, args) => {
+  resolve: async (parent, args, context) => {
+    const { user } = context
+    if (!user) {
+      throw new Error('User is not authenticated')
+    }
     try {
+      if (!user.isAuthorizedTo(QUERY_ADDRESS)) {
+        throw new Error('Unauthorized')
+      }
       const addressStored = await Address.findById(args.id)
       return addressStored
     } catch (err) {

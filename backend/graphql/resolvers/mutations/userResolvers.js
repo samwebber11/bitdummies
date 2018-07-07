@@ -1,5 +1,5 @@
 import User from '../../../database/models/user'
-import { CHANGE_USER_ROLE } from '../../../database/operations'
+import { CHANGE_USER_ROLE, UPDATE_USER } from '../../../database/operations'
 
 // This resolver is not required.
 const addUserResolver = async (parent, args, context) => {
@@ -7,7 +7,6 @@ const addUserResolver = async (parent, args, context) => {
   if (user) {
     throw new Error('Cannot create another account while signed in')
   }
-
   try {
     return await new User(args).save()
   } catch (err) {
@@ -45,6 +44,9 @@ const updateUserResolver = async (parent, args, context) => {
   }
 
   try {
+    if (!user.isAuthorizedTo(UPDATE_USER)) {
+      throw new Error('Unauthorized')
+    }
     const updatedUser = await User.findByIdAndUpdate(user._id, args, {
       new: true,
       runValidators: true,

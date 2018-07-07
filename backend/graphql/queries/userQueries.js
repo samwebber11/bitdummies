@@ -9,6 +9,7 @@ import {
 import UserType from '../types/UserType'
 import OrderByType from '../types/OrderByType'
 import User from '../../database/models/user'
+import { GET_USER_BY_ID, GET_ALL_USERS } from '../../database/operations'
 
 // Fetch the list of all users (can be filtered).
 const users = {
@@ -60,8 +61,15 @@ const users = {
       }),
     },
   },
-  resolve: async (parent, args) => {
+  resolve: async (parent, args, context) => {
+    const { user } = context
+    if (!user) {
+      throw new Error('Unauthenticated')
+    }
     try {
+      if (!user.isAuthorizedTo(GET_ALL_USERS)) {
+        throw new Error('Unauthorized')
+      }
       const userList = await User.find(args.filters).sort(args.orderBy)
       return userList
     } catch (err) {
@@ -79,8 +87,15 @@ const user = {
       type: new GraphQLNonNull(GraphQLID),
     },
   },
-  resolve: async (parent, args) => {
+  resolve: async (parent, args, context) => {
+    const { user } = context
+    if (!user) {
+      throw new Error('Unauthenticated')
+    }
     try {
+      if (!user.isAuthorizedTo(GET_USER_BY_ID)) {
+        throw new Error('Unauthorized')
+      }
       const userStored = await User.findById(args.id)
       return userStored
     } catch (err) {

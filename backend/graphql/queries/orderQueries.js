@@ -9,6 +9,8 @@ import GraphQLDate from 'graphql-date'
 import OrderType from '../types/OrderType'
 import OrderByType from '../types/OrderByType'
 import Order from '../../database/models/order'
+import User from '../../database/models/user'
+import { QUERY_ORDERS, QUERY_ORDER } from '../../database/operations'
 
 // Fetch all orders (can be filtered).
 const orders = {
@@ -35,8 +37,15 @@ const orders = {
       }),
     },
   },
-  resolve: async (parent, args) => {
+  resolve: async (parent, args, context) => {
+    const { user } = context
+    if (!user) {
+      throw new Error('Unauthenticated')
+    }
     try {
+      if (!user.isAuthorizedTo(QUERY_ORDERS)) {
+        throw new Error('Unauthorized')
+      }
       const ordersList = await Order.find(args.filters).sort(args.orderBy)
       return ordersList
     } catch (err) {
@@ -54,8 +63,15 @@ const order = {
       type: new GraphQLNonNull(GraphQLID),
     },
   },
-  resolve: async (parent, args) => {
+  resolve: async (parent, args, context) => {
+    const { user } = context
+    if (!user) {
+      throw new Error('Unauthenticated')
+    }
     try {
+      if (!user.isAuthorizedTo(QUERY_ORDER)) {
+        throw new Error('Unauthorized')
+      }
       const orderPlaced = await Order.findById(args.id)
       return orderPlaced
     } catch (err) {
