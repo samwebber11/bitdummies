@@ -1,6 +1,8 @@
 import mongoose, { ValidationError } from 'mongoose'
 import { isEmail, isMobilePhone } from 'validator'
 
+import permissions from '../permissions'
+
 const { Schema } = mongoose
 
 const addressLimit = arr => arr.length <= 5
@@ -56,6 +58,14 @@ const UserSchema = new Schema({
       ref: 'Order',
     },
   ],
+  roles: [
+    {
+      type: String,
+      enum: ['admin', 'user'],
+      required: true,
+      default: 'user',
+    },
+  ],
 })
 
 UserSchema.virtual('name').get(function() {
@@ -79,25 +89,19 @@ UserSchema.pre('findOneAndUpdate', function(next) {
   next()
 })
 
-UserSchema.methods.findPermit = function(role, operation) {
-  const user = this
-  const $role = user.roles[role]
-  if (typeof role !== 'string') {
-    throw new Error('Expected parameter as a string')
-  }
+UserSchema.methods.isAuthorized = function(operation) {
   if (typeof operation !== 'string') {
-    throw new Error('Expected parameter as a string')
+    throw new Error('Expected parameter operation as a string')
   }
-  if (!$role) {
-    throw new Error('Undefined Role')
-  }
-  const isAllowed = $role.indexOf(operation)
-  if (isAllowed === -1) {
-    throw new Error('User is not allowed to perform this operation')
-  }
-  if (isAllowed !== -1) {
-    return true
-  }
+
+  let isAllowed = false
+  this.roles.forEach(role => {
+    if (permissions[role].includes(operation)) {
+      isAllowed = true
+    }
+  })
+
+  return isAllowed
 }
 
 const skipInit = process.env.NODE_ENV === 'test'
