@@ -1,6 +1,7 @@
 import Order from '../../database/models/order'
 import Product from '../../database/models/product'
 import Address from '../../database/models/address'
+import User from '../../database/models/user'
 
 const addOrderResolver = async (parent, args, context) => {
   const { user } = context
@@ -134,7 +135,7 @@ const addOrderResolver = async (parent, args, context) => {
 const cancelOrderResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
-    throw new Error('Msut be logged in')
+    throw new Error('Must be logged in')
   }
 
   try {
@@ -148,7 +149,9 @@ const cancelOrderResolver = async (parent, args, context) => {
     }
 
     // Check to see if the order is in the user's list of orders.
-    const orderIndex = user.order.indexOf(args.id)
+    const orderIndex = user.order.findIndex(
+      userOrder => userOrder.toString() === args.id.toString()
+    )
     if (orderIndex === -1) {
       throw new Error('Order does not belong to the current user')
     }
@@ -184,8 +187,7 @@ const cancelOrderResolver = async (parent, args, context) => {
     )
 
     // Remove the order from the user's list of orders and save to the database.
-    user.order.splice(orderIndex, 1)
-    await user.save()
+    await User.findByIdAndUpdate(user._id, { $pull: { order: order._id } })
 
     // Remove the order from the database.
     return await Order.findByIdAndRemove(args.id)
@@ -207,7 +209,7 @@ const removeProductFromOrderResolver = async (parent, args, context) => {
       throw new Error('Invalid order')
     }
     if (order.status !== 'Processing') {
-      throw new Error('Order cannot be cancelled now')
+      throw new Error('Order items cannot be changed now')
     }
 
     // Check to see if the order is in the user's list of orders.
@@ -228,7 +230,7 @@ const removeProductFromOrderResolver = async (parent, args, context) => {
     const productIndex = order.products.findIndex(
       pro => pro.product.toString() === args.product.toString()
     )
-    if (!productIndex) {
+    if (productIndex === -1) {
       throw new Error('Product not found in order')
     }
 
@@ -270,15 +272,17 @@ const changeOrderStatusResolver = async (parent, args, context) => {
   }
 
   try {
-    // Find the order.
-    const order = await Order.findByIdAndUpdate(
-      args.id,
-      {
-        status: args.status,
-      },
+    const { id, status } = args
+    if (!status || typeof status !== 'string') {
+      throw new Error('Invalid status')
+    }
+
+    // Find the order and change the status.
+    return await Order.findByIdAndUpdate(
+      id,
+      { status },
       { new: true, runValidators: true }
     )
-    return order
   } catch (err) {
     throw err
   }
