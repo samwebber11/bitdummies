@@ -59,6 +59,11 @@ const UserType = new GraphQLObjectType({
         }
       },
     },
+    roles: {
+      type: new GraphQLNonNull(
+        new GraphQLList(new GraphQLNonNull(GraphQLString))
+      ),
+    },
   }),
 })
 

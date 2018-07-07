@@ -1,4 +1,5 @@
 import User from '../../database/models/user'
+import { CHANGE_USER_ROLE } from '../../database/operations'
 
 // This resolver is not required.
 const addUserResolver = async (parent, args, context) => {
@@ -54,4 +55,35 @@ const updateUserResolver = async (parent, args, context) => {
   }
 }
 
-export { addUserResolver, removeUserResolver, updateUserResolver }
+const changeUserRoleResolver = async (parent, args, context) => {
+  const { user } = context
+  if (!user) {
+    throw new Error('Must be logged in')
+  }
+
+  try {
+    if (!user.isAuthorizedTo(CHANGE_USER_ROLE)) {
+      throw new Error('Unauthorized')
+    }
+
+    const { id, roles } = args
+    if (!roles) {
+      throw new Error('Invalid roles')
+    }
+
+    return await User.findByIdAndUpdate(
+      id,
+      { roles },
+      { new: true, runValidators: true }
+    )
+  } catch (err) {
+    throw err
+  }
+}
+
+export {
+  addUserResolver,
+  removeUserResolver,
+  updateUserResolver,
+  changeUserRoleResolver,
+}
