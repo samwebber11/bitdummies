@@ -59,4 +59,11 @@ describe('User', () => {
       new GraphQLNonNull(OrderType)
     )
   })
+
+  it('Should have a roles field of type List(String)', () => {
+    expect(UserType.getFields()).toHaveProperty('roles')
+    expect(UserType.getFields().roles.type).toEqual(
+      new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(GraphQLString)))
+    )
+  })
 })
