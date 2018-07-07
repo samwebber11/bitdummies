@@ -1,4 +1,4 @@
-import mongoose, { ValidationError } from 'mongoose'
+import mongoose from 'mongoose'
 import { isEmail, isMobilePhone } from 'validator'
 
 import permissions from '../permissions'
@@ -7,6 +7,7 @@ const { Schema } = mongoose
 
 const addressLimit = arr => arr.length <= 5
 const checkMobilePhone = phone => isMobilePhone(phone.toString(), 'any')
+const checkRoles = roles => roles.length > 0
 
 const UserSchema = new Schema({
   provider: {
@@ -58,38 +59,26 @@ const UserSchema = new Schema({
       ref: 'Order',
     },
   ],
-  roles: [
-    {
-      type: String,
-      enum: ['admin', 'user'],
-      required: true,
-      default: 'user',
-    },
-  ],
+  roles: {
+    type: [
+      {
+        type: String,
+        enum: ['admin', 'user'],
+        required: true,
+        default: 'user',
+      },
+    ],
+    required: true,
+    validate: [checkRoles, 'Must provide a role'],
+    default: ['user'],
+  },
 })
 
 UserSchema.virtual('name').get(function() {
   return `${this.firstName} ${this.lastName}`
 })
 
-UserSchema.pre('findOneAndUpdate', function(next) {
-  const { phone, email } = this.getUpdate()
-  if (phone) {
-    if (!checkMobilePhone(phone)) {
-      throw new ValidationError('Invalid phone')
-    }
-  }
-
-  if (email) {
-    if (!isEmail(email.toString())) {
-      throw new ValidationError('Invalid email')
-    }
-  }
-
-  next()
-})
-
-UserSchema.methods.isAuthorized = function(operation) {
+UserSchema.methods.isAuthorizedTo = function(operation) {
   if (typeof operation !== 'string') {
     throw new Error('Expected parameter operation as a string')
   }
