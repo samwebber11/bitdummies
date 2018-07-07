@@ -9,19 +9,46 @@ import {
   CHANGE_ORDER_STATUS,
 } from '../../../database/operations'
 
+import { AppError } from '../../../Errors/error'
+import {
+  AddOrderError,
+  SaveOrderError,
+  CheckStatusError,
+  RemoveOrderError,
+  CheckProductInOrderError,
+  CheckOrderError,
+  CancelOrderError,
+  OrderLinkError,
+  OrderChangeError,
+  MinQuantityError,
+} from '../../../Errors/orderError'
+import { PermitError } from '../../../Errors/permitError'
+import { AuthError } from '../../../Errors/authError'
+import {
+  FindProductError,
+  UpdateProductError,
+  QuantityExceedError,
+  ProductCheckError,
+} from '../../../Errors/productError'
+import { UserFindError } from '../../../Errors/permitAddressError'
+import {
+  CheckAddressError,
+  CheckUserAddressError,
+} from '../../../Errors/addressError'
+
 const addOrderResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
-    throw new Error('Must be logged in')
+    throw new AuthError()
   }
   try {
     // Check if user is Authorized to perform this operation
     if (!user.isAuthorizedTo(ADD_ORDER)) {
-      throw new Error('Unauthorized')
+      throw new PermitError()
     }
     // Make sure products were provided.
     if (!args.products || !args.products.length || args.products.length === 0) {
-      throw new Error('Must have at least one product')
+      throw new MinQuantityError()
     }
 
     // Fetch the products from the database.
@@ -33,7 +60,7 @@ const addOrderResolver = async (parent, args, context) => {
 
     // Check whether each product was found in the database or not.
     if (!dbProducts || dbProducts.length !== productIDs.length) {
-      throw new Error('Products not in database')
+      throw new ProductCheckError()
     }
 
     // Check whether the quantity requested for each product is within limit.
@@ -46,14 +73,14 @@ const addOrderResolver = async (parent, args, context) => {
       const quantityRequired = product.quantity
       const { quantityAvailable } = proSize
       if (quantityRequired > quantityAvailable) {
-        throw new Error('Quantity limit exceeded')
+        throw new QuantityExceedError()
       }
     })
 
     // Check if the address is valid or not.
     const address = await Address.findById(args.shippingAddress)
     if (!address) {
-      throw new Error('Invalid address')
+      throw new CheckAddressError()
     }
 
     // Check whether the address is contained in the user's list of addresses.
@@ -61,7 +88,7 @@ const addOrderResolver = async (parent, args, context) => {
       userAddress => userAddress.toString() === address._id.toString()
     )
     if (!addressInUserAddresses) {
-      throw new Error('Address is not associated with user')
+      throw new CheckUserAddressError()
     }
 
     // TODO: Check for payment here.
@@ -77,7 +104,7 @@ const addOrderResolver = async (parent, args, context) => {
         // Find the corresponding size for the size requested, and decrease the quantity.
         const index = pro.size.findIndex(size => size.label === product.size)
         if (index === -1) {
-          throw new Error('Some error occurred while adding order')
+          throw new AddOrderError()
         }
         pro.size[index].quantityAvailable -= product.quantity
 
@@ -90,7 +117,7 @@ const addOrderResolver = async (parent, args, context) => {
           { new: true, runValidators: true }
         )
         if (!updatedProduct) {
-          throw new Error('Could not update product')
+          throw new UpdateProductError()
         }
       })
     )
@@ -125,14 +152,14 @@ const addOrderResolver = async (parent, args, context) => {
       orderedAt: Date.now(),
     }).save()
     if (!order) {
-      throw new Error('Could not save order')
+      throw new SaveOrderError()
     }
 
     // Also, add the order to the user's list of orders.
     user.order.push(order._id)
     await user.save()
     if (!user) {
-      throw new Error('Error occured in saving order')
+      throw new SaveOrderError()
     }
 
     return order
@@ -144,20 +171,20 @@ const addOrderResolver = async (parent, args, context) => {
 const cancelOrderResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
-    throw new Error('Must be logged in')
+    throw new AuthError()
   }
 
   try {
     if (!user.isAuthorizedTo(CANCEL_ORDER)) {
-      throw new Error('Unauthorized')
+      throw new PermitError()
     }
     // Find the order and check that its status is 'Processing'.
     const order = await Order.findById(args.id)
     if (!order) {
-      throw new Error('Invalid order')
+      throw new CheckOrderError()
     }
     if (order.status !== 'Processing') {
-      throw new Error('Order cannot be cancelled now')
+      throw new CancelOrderError()
     }
 
     // Check to see if the order is in the user's list of orders.
@@ -165,7 +192,7 @@ const cancelOrderResolver = async (parent, args, context) => {
       userOrder => userOrder.toString() === args.id.toString()
     )
     if (orderIndex === -1) {
-      throw new Error('Order does not belong to the current user')
+      throw new OrderLinkError()
     }
 
     // Update the products in the database to reflect the increase in quantity.
@@ -174,13 +201,13 @@ const cancelOrderResolver = async (parent, args, context) => {
         // For each product in the order, find the corresponding product in the database.
         const pro = await Product.findById(product.product)
         if (!pro) {
-          throw new Error('Product not found')
+          throw new FindProductError()
         }
 
         // Find the corresponding size of the product, and increase the quantity.
         const index = pro.size.findIndex(size => size.label === product.size)
         if (index === -1) {
-          throw new Error('Some error occurred while cancelling order')
+          throw new CancelOrderError()
         }
         pro.size[index].quantityAvailable += product.quantity
 
@@ -193,7 +220,7 @@ const cancelOrderResolver = async (parent, args, context) => {
           { new: true, runValidators: true }
         )
         if (!updatedProduct) {
-          throw new Error('Could not update product')
+          throw new UpdateProductError()
         }
       })
     )
@@ -211,20 +238,20 @@ const cancelOrderResolver = async (parent, args, context) => {
 const removeProductFromOrderResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
-    throw new Error('Must be logged in')
+    throw new AuthError()
   }
 
   try {
     if (!user.isAuthorizedTo(REMOVE_PRODUCT_FROM_ORDER)) {
-      throw new Error('Unauthorized')
+      throw new PermitError()
     }
     // Find the order and check that its status is 'Processing'.
     const order = await Order.findById(args.id)
     if (!order) {
-      throw new Error('Invalid order')
+      throw new CheckOrderError()
     }
     if (order.status !== 'Processing') {
-      throw new Error('Order items cannot be changed now')
+      throw new ChangeOrderError()
     }
 
     // Check to see if the order is in the user's list of orders.
@@ -232,13 +259,13 @@ const removeProductFromOrderResolver = async (parent, args, context) => {
       userOrder => userOrder.toString() === order._id.toString()
     )
     if (!orderInUserOrders) {
-      throw new Error('Order does not belong to the current user')
+      throw new OrderLinkError()
     }
 
     // Check that the product ID is valid.
     const product = await Product.findById(args.product)
     if (!product) {
-      throw new Error('Invalid product')
+      throw new ProductCheckError()
     }
 
     // Check that the order contains the provided product ID.
@@ -246,7 +273,7 @@ const removeProductFromOrderResolver = async (parent, args, context) => {
       pro => pro.product.toString() === args.product.toString()
     )
     if (productIndex === -1) {
-      throw new Error('Product not found in order')
+      throw new CheckProductInOrderError()
     }
 
     // Find the corresponding size for the product, and increase the quantity.
@@ -254,7 +281,7 @@ const removeProductFromOrderResolver = async (parent, args, context) => {
       size => size.label === order.products[productIndex].size
     )
     if (sizeIndex === -1) {
-      throw new Error('Some error occurred while removing product from order')
+      throw new RemoveProductError()
     }
     product.size[sizeIndex].quantityAvailable +=
       order.products[productIndex].quantity
@@ -268,7 +295,7 @@ const removeProductFromOrderResolver = async (parent, args, context) => {
       { new: true, runValidators: true }
     )
     if (!updatedProduct) {
-      throw new Error('Could not update product')
+      throw new UpdateProductError()
     }
 
     // Remove the product from the order.
@@ -282,16 +309,16 @@ const removeProductFromOrderResolver = async (parent, args, context) => {
 const changeOrderStatusResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
-    throw new Error('Unauthorized')
+    throw new AuthError()
   }
 
   try {
     if (!user.isAuthorizedTo(CHANGE_ORDER_STATUS)) {
-      throw new Error('Unauthorized')
+      throw new PermitError()
     }
     const { id, status } = args
     if (!status || typeof status !== 'string') {
-      throw new Error('Invalid status')
+      throw new CheckStatusError()
     }
 
     // Find the order and change the status.
