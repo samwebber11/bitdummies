@@ -11,6 +11,11 @@ import OrderByType from '../types/OrderByType'
 import User from '../../database/models/user'
 import { GET_USER_BY_ID, GET_ALL_USERS } from '../../database/operations'
 
+import { AppError } from '../../Errors/error'
+import { FetchAllUsersError, FetchOneUserError } from '../../Errors/userError'
+import { AuthError } from '../../Errors/authError'
+import { PermitError } from '../../Errors/permitError'
+
 // Fetch the list of all users (can be filtered).
 const users = {
   type: new GraphQLList(UserType),
@@ -64,11 +69,11 @@ const users = {
   resolve: async (parent, args, context) => {
     const { user } = context
     if (!user) {
-      throw new Error('Unauthenticated')
+      throw new AuthError()
     }
     try {
       if (!user.isAuthorizedTo(GET_ALL_USERS)) {
-        throw new Error('Unauthorized')
+        throw new PermitError()
       }
       const userList = await User.find(args.filters).sort(args.orderBy)
       return userList
@@ -90,11 +95,11 @@ const user = {
   resolve: async (parent, args, context) => {
     const { user } = context
     if (!user) {
-      throw new Error('Unauthenticated')
+      throw new AuthError()
     }
     try {
       if (!user.isAuthorizedTo(GET_USER_BY_ID)) {
-        throw new Error('Unauthorized')
+        throw new PermitError()
       }
       const userStored = await User.findById(args.id)
       return userStored

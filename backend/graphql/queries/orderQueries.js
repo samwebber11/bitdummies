@@ -12,6 +12,10 @@ import Order from '../../database/models/order'
 import User from '../../database/models/user'
 import { QUERY_ORDERS, QUERY_ORDER } from '../../database/operations'
 
+import { AppError } from '../../Errors/error'
+import { AuthError } from '../../Errors/authError'
+import { PermitError } from '../../Errors/permitError'
+
 // Fetch all orders (can be filtered).
 const orders = {
   type: new GraphQLList(OrderType),
@@ -40,11 +44,11 @@ const orders = {
   resolve: async (parent, args, context) => {
     const { user } = context
     if (!user) {
-      throw new Error('Unauthenticated')
+      throw new AuthError()
     }
     try {
       if (!user.isAuthorizedTo(QUERY_ORDERS)) {
-        throw new Error('Unauthorized')
+        throw new PermitError()
       }
       const ordersList = await Order.find(args.filters).sort(args.orderBy)
       return ordersList
@@ -66,11 +70,11 @@ const order = {
   resolve: async (parent, args, context) => {
     const { user } = context
     if (!user) {
-      throw new Error('Unauthenticated')
+      throw new AuthError()
     }
     try {
       if (!user.isAuthorizedTo(QUERY_ORDER)) {
-        throw new Error('Unauthorized')
+        throw new PermitError()
       }
       const orderPlaced = await Order.findById(args.id)
       return orderPlaced

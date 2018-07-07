@@ -12,6 +12,10 @@ import Address from '../../database/models/address'
 import User from '../../database/models/user'
 import { QUERY_ADDRESS, QUERY_ADDRESSES } from '../../database/operations'
 
+import { AppError } from '../../Errors/error'
+import { AuthError } from '../../Errors/authError'
+import { PermitError } from '../../Errors/permitError'
+
 // Fetch all addresses (can be filtered).
 const addresses = {
   type: new GraphQLList(AddressType),
@@ -49,11 +53,11 @@ const addresses = {
   resolve: async (parent, args, context) => {
     const { user } = context
     if (!user) {
-      throw new Error('User is unauthenticated')
+      throw new AuthError()
     }
     try {
       if (!user.isAuthorizedTo(QUERY_ADDRESSES)) {
-        throw new Error('Unauthorized')
+        throw new PermitError()
       }
       const addressesList = await Address.find(args.filters).sort(args.orderBy)
       return addressesList
@@ -75,11 +79,11 @@ const address = {
   resolve: async (parent, args, context) => {
     const { user } = context
     if (!user) {
-      throw new Error('User is not authenticated')
+      throw new AuthError()
     }
     try {
       if (!user.isAuthorizedTo(QUERY_ADDRESS)) {
-        throw new Error('Unauthorized')
+        throw new PermitError()
       }
       const addressStored = await Address.findById(args.id)
       return addressStored
