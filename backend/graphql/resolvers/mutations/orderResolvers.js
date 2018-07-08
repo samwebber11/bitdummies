@@ -9,7 +9,7 @@ import {
   CHANGE_ORDER_STATUS,
 } from '../../../database/operations'
 
-import { AppError } from '../../../Errors/error'
+import AppError from '../../../Errors/error'
 import {
   AddOrderError,
   SaveOrderError,
@@ -22,8 +22,8 @@ import {
   OrderChangeError,
   MinQuantityError,
 } from '../../../Errors/orderError'
-import { PermitError } from '../../../Errors/permitError'
-import { AuthError } from '../../../Errors/authError'
+import PermitError from '../../../Errors/permitError'
+import AuthError from '../../../Errors/authError'
 import {
   FindProductError,
   UpdateProductError,

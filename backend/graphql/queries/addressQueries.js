@@ -12,9 +12,9 @@ import Address from '../../database/models/address'
 import User from '../../database/models/user'
 import { QUERY_ADDRESS, QUERY_ADDRESSES } from '../../database/operations'
 
-import { AppError } from '../../Errors/error'
-import { AuthError } from '../../Errors/authError'
-import { PermitError } from '../../Errors/permitError'
+import AppError from '../../Errors/error'
+import AuthError from '../../Errors/authError'
+import PermitError from '../../Errors/permitError'
 
 // Fetch all addresses (can be filtered).
 const addresses = {

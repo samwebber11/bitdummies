@@ -1,4 +1,4 @@
-import { AppError } from './error'
+import AppError from './error'
 
 class AddAddressError extends AppError {
   constructor(message) {

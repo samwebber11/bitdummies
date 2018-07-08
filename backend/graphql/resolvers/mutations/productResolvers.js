@@ -8,9 +8,9 @@ import {
   UPDATE_PRODUCT_IMAGES,
   UPDATE_PRODUCT_QUANTITY,
 } from '../../../database/operations'
-import { AppError } from '../../../Errors/error'
-import { PermitError } from '../../../Errors/permitError'
-import { AuthError } from '../../../Errors/authError'
+import AppError from '../../../Errors/error'
+import PermitError from '../../../Errors/permitError'
+import AuthError from '../../../Errors/authError'
 import { InvalidCredentialsError } from '../../../Errors/productError'
 
 const addProductResolver = async (parent, args, context) => {

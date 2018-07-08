@@ -8,13 +8,13 @@ import {
   REMOVE_ADDRESS,
   UPDATE_ADDRESS,
 } from '../../../database/operations'
-import { AppError } from '../../../Errors/error'
+import AppError from '../../../Errors/error'
 import {
   AddAddressError,
   UpdateAddressError,
 } from '../../../Errors/addressError'
-import { PermitError } from '../../../Errors/permitError'
-import { AuthError } from '../../../Errors/authError'
+import PermitError from '../../../Errors/permitError'
+import AuthError from '../../../Errors/authError'
 import {
   PermitUpdateAddressError,
   PermitDeleteAddressError,

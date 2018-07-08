@@ -12,9 +12,9 @@ import Order from '../../database/models/order'
 import User from '../../database/models/user'
 import { QUERY_ORDERS, QUERY_ORDER } from '../../database/operations'
 
-import { AppError } from '../../Errors/error'
-import { AuthError } from '../../Errors/authError'
-import { PermitError } from '../../Errors/permitError'
+import AppError from '../../Errors/error'
+import AuthError from '../../Errors/authError'
+import PermitError from '../../Errors/permitError'
 
 // Fetch all orders (can be filtered).
 const orders = {

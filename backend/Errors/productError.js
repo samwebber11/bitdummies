@@ -1,4 +1,4 @@
-import { AppError } from './error'
+import AppError from './error'
 
 class UpdateProductError extends AppError {
   constructor(message) {

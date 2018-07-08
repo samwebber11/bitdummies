@@ -1,4 +1,4 @@
-import { AppError } from './error'
+import AppError from './error'
 
 class RoleChangeError extends AppError {
   constructor(message) {

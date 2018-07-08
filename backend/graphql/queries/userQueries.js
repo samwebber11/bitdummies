@@ -11,10 +11,9 @@ import OrderByType from '../types/OrderByType'
 import User from '../../database/models/user'
 import { GET_USER_BY_ID, GET_ALL_USERS } from '../../database/operations'
 
-import { AppError } from '../../Errors/error'
-import { FetchAllUsersError, FetchOneUserError } from '../../Errors/userError'
-import { AuthError } from '../../Errors/authError'
-import { PermitError } from '../../Errors/permitError'
+import AppError from '../../Errors/error'
+import AuthError from '../../Errors/authError'
+import PermitError from '../../Errors/permitError'
 
 // Fetch the list of all users (can be filtered).
 const users = {
