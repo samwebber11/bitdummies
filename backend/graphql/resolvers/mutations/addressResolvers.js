@@ -8,9 +8,11 @@ import {
   REMOVE_ADDRESS,
   UPDATE_ADDRESS,
 } from '../../../database/operations'
-import AuthenticationError from '../../../errors/AuthenticationError'
-import AuthorizationError from '../../../errors/AuthorizationError'
-import AddressUnassociatedError from '../../../errors/AddressUnassociatedError'
+import {
+  AuthenticationError,
+  AuthorizationError,
+  AddressUnassociatedError,
+} from '../../../errors/'
 
 const addAddressResolver = async (parent, args, context) => {
   const { user } = context

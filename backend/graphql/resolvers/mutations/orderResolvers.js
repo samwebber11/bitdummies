@@ -8,19 +8,21 @@ import {
   REMOVE_PRODUCT_FROM_ORDER,
   CHANGE_ORDER_STATUS,
 } from '../../../database/operations'
-import AuthenticationError from '../../../errors/AuthenticationError'
-import AuthorizationError from '../../../errors/AuthorizationError'
-import InvalidArgsError from '../../../errors/InvalidArgsError'
-import InvalidQuantityError from '../../../errors/InvalidQuantityError'
-import InvalidSizeError from '../../../errors/InvalidSizeError'
-import AddressNotFoundError from '../../../errors/AddressNotFoundError'
-import AddressUnassociatedError from '../../../errors/AddressUnassociatedError'
-import OrderNotFoundError from '../../../errors/OrderNotFoundError'
-import OrderCancellationError from '../../../errors/OrderCancellationError'
-import OrderUnassociatedError from '../../../errors/OrderUnassociatedError'
-import ProductNotFoundError from '../../../errors/ProductNotFoundError'
-import ProductUnassociatedError from '../../../errors/ProductUnassociatedError'
-import InvalidOrderStatusError from '../../../errors/InvalidOrderStatusError'
+import {
+  AuthenticationError,
+  AuthorizationError,
+  InvalidArgsError,
+  InvalidQuantityError,
+  InvalidSizeError,
+  AddressNotFoundError,
+  AddressUnassociatedError,
+  OrderNotFoundError,
+  OrderCancellationError,
+  OrderUnassociatedError,
+  ProductNotFoundError,
+  ProductUnassociatedError,
+  InvalidOrderStatusError,
+} from '../../../errors/'
 
 const addOrderResolver = async (parent, args, context) => {
   const { user } = context

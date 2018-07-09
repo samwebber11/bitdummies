@@ -1,7 +1,6 @@
 import Address from '../../../database/models/address'
 import { QUERY_ADDRESS, QUERY_ADDRESSES } from '../../../database/operations'
-import AuthenticationError from '../../../errors/AuthenticationError'
-import AuthorizationError from '../../../errors/AuthorizationError'
+import { AuthenticationError, AuthorizationError } from '../../../errors/'
 
 const addressesResolver = async (parent, args, context) => {
   const { user } = context

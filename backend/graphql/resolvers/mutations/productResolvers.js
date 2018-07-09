@@ -7,10 +7,12 @@ import {
   UPDATE_PRODUCT_IMAGES,
   UPDATE_PRODUCT_QUANTITY,
 } from '../../../database/operations'
-import AuthenticationError from '../../../errors/AuthenticationError'
-import AuthorizationError from '../../../errors/AuthorizationError'
-import InvalidSizeError from '../../../errors/InvalidSizeError'
-import ProductNotFoundError from '../../../errors/ProductNotFoundError'
+import {
+  AuthenticationError,
+  AuthorizationError,
+  InvalidSizeError,
+  ProductNotFoundError,
+} from '../../../errors/'
 
 const addProductResolver = async (parent, args, context) => {
   const { user } = context

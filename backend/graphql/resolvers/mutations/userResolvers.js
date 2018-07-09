@@ -1,9 +1,11 @@
 import User from '../../../database/models/user'
 import { CHANGE_USER_ROLE, UPDATE_USER } from '../../../database/operations'
-import AuthenticationError from '../../../errors/AuthenticationError'
-import AuthorizationError from '../../../errors/AuthorizationError'
-import OrderPendingError from '../../../errors/OrderPendingError'
-import InvalidRolesError from '../../../errors/InvalidRolesError'
+import {
+  AuthenticationError,
+  AuthorizationError,
+  OrderPendingError,
+  InvalidRolesError,
+} from '../../../errors/'
 
 // This resolver is not required.
 const addUserResolver = async (parent, args, context) => {

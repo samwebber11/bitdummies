@@ -1,7 +1,6 @@
 import User from '../../../database/models/user'
 import { GET_USER_BY_ID, GET_ALL_USERS } from '../../../database/operations'
-import AuthenticationError from '../../../errors/AuthenticationError'
-import AuthorizationError from '../../../errors/AuthorizationError'
+import { AuthenticationError, AuthorizationError } from '../../../errors/'
 
 const usersResolver = async (parent, args, context) => {
   const { user } = context

@@ -1,7 +1,6 @@
 import Order from '../../../database/models/order'
 import { QUERY_ORDERS, QUERY_ORDER } from '../../../database/operations'
-import AuthenticationError from '../../../errors/AuthenticationError'
-import AuthorizationError from '../../../errors/AuthorizationError'
+import { AuthenticationError, AuthorizationError } from '../../../errors/'
 
 const ordersResolver = async (parent, args, context) => {
   const { user } = context
