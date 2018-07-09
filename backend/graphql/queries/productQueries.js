@@ -8,7 +8,10 @@ import {
 
 import ProductType from '../types/ProductType'
 import OrderByType from '../types/OrderByType'
-import Product from '../../database/models/product'
+import {
+  productsResolver,
+  productResolver,
+} from '../resolvers/queries/productResolvers'
 
 // Fetch the list of all products (can be filtered).
 const products = {
@@ -41,14 +44,7 @@ const products = {
       }),
     },
   },
-  resolve: async (parent, args) => {
-    try {
-      const productsList = await Product.find(args.filters).sort(args.orderBy)
-      return productsList
-    } catch (err) {
-      throw err
-    }
-  },
+  resolve: productsResolver,
 }
 
 // Fetch product by ID.
@@ -59,14 +55,7 @@ const product = {
       type: new GraphQLNonNull(GraphQLID),
     },
   },
-  resolve: async (parent, args) => {
-    try {
-      const dbProduct = await Product.findById(args.id)
-      return dbProduct
-    } catch (err) {
-      throw err
-    }
-  },
+  resolve: productResolver,
 }
 
 export { products, product }

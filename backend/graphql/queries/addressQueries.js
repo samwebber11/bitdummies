@@ -8,10 +8,10 @@ import {
 
 import AddressType from '../types/AddressType'
 import OrderByType from '../types/OrderByType'
-import Address from '../../database/models/address'
-import { QUERY_ADDRESS, QUERY_ADDRESSES } from '../../database/operations'
-import AuthenticationError from '../../errors/AuthenticationError'
-import AuthorizationError from '../../errors/AuthorizationError'
+import {
+  addressesResolver,
+  addressResolver,
+} from '../resolvers/queries/addressResolvers'
 
 // Fetch all addresses (can be filtered).
 const addresses = {
@@ -47,21 +47,7 @@ const addresses = {
       }),
     },
   },
-  resolve: async (parent, args, context) => {
-    const { user } = context
-    if (!user) {
-      throw new AuthenticationError()
-    }
-    try {
-      if (!user.isAuthorizedTo(QUERY_ADDRESSES)) {
-        throw new AuthorizationError()
-      }
-      const addressesList = await Address.find(args.filters).sort(args.orderBy)
-      return addressesList
-    } catch (err) {
-      throw err
-    }
-  },
+  resolve: addressesResolver,
 }
 
 // Fetch address by its ID.
@@ -72,21 +58,7 @@ const address = {
       type: new GraphQLNonNull(GraphQLID),
     },
   },
-  resolve: async (parent, args, context) => {
-    const { user } = context
-    if (!user) {
-      throw new AuthenticationError()
-    }
-    try {
-      if (!user.isAuthorizedTo(QUERY_ADDRESS)) {
-        throw new AuthorizationError()
-      }
-      const addressStored = await Address.findById(args.id)
-      return addressStored
-    } catch (err) {
-      throw err
-    }
-  },
+  resolve: addressResolver,
 }
 
 export { addresses, address }

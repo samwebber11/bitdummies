@@ -8,10 +8,7 @@ import {
 
 import UserType from '../types/UserType'
 import OrderByType from '../types/OrderByType'
-import User from '../../database/models/user'
-import { GET_USER_BY_ID, GET_ALL_USERS } from '../../database/operations'
-import AuthenticationError from '../../errors/AuthenticationError'
-import AuthorizationError from '../../errors/AuthorizationError'
+import { usersResolver, userResolver } from '../resolvers/queries/userResolvers'
 
 // Fetch the list of all users (can be filtered).
 const users = {
@@ -63,21 +60,7 @@ const users = {
       }),
     },
   },
-  resolve: async (parent, args, context) => {
-    const { user } = context
-    if (!user) {
-      throw new AuthenticationError()
-    }
-    try {
-      if (!user.isAuthorizedTo(GET_ALL_USERS)) {
-        throw new AuthorizationError()
-      }
-      const userList = await User.find(args.filters).sort(args.orderBy)
-      return userList
-    } catch (err) {
-      throw err
-    }
-  },
+  resolve: usersResolver,
 }
 
 // Fetch a user either by ID.
@@ -88,22 +71,7 @@ const user = {
       type: new GraphQLNonNull(GraphQLID),
     },
   },
-  resolve: async (parent, args, context) => {
-    // eslint-disable-next-line no-shadow
-    const { user } = context
-    if (!user) {
-      throw new AuthenticationError()
-    }
-    try {
-      if (!user.isAuthorizedTo(GET_USER_BY_ID)) {
-        throw new AuthorizationError()
-      }
-      const userStored = await User.findById(args.id)
-      return userStored
-    } catch (err) {
-      throw err
-    }
-  },
+  resolve: userResolver,
 }
 
 export { users, user }
