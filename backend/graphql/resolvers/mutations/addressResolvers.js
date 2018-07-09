@@ -3,20 +3,39 @@ import { Types } from 'mongoose'
 import Address from '../../../database/models/address'
 import User from '../../../database/models/user'
 import { pick } from '../../../utils'
+import {
+  ADD_ADDRESS,
+  REMOVE_ADDRESS,
+  UPDATE_ADDRESS,
+} from '../../../database/operations'
+import AppError from '../../../Errors/error'
+import {
+  AddAddressError,
+  UpdateAddressError,
+} from '../../../Errors/addressError'
+import PermitError from '../../../Errors/permitError'
+import AuthError from '../../../Errors/authError'
+import {
+  PermitUpdateAddressError,
+  PermitDeleteAddressError,
+  UserFindError,
+} from '../../../Errors/permitAddressError'
 
 const addAddressResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
-    throw new Error('Must be logged in')
+    throw new AuthError()
   }
-
   // New address created should have a predefined ID.
   args._id = new Types.ObjectId()
   try {
+    if (!user.isAuthorizedTo(ADD_ADDRESS)) {
+      throw new PermitError()
+    }
     // Save address to Address collection.
     const address = await Address(args).save()
     if (!address) {
-      throw new Error('Could not add address')
+      throw new AddAddressError()
     }
 
     // Add address to User's list of addresses.
@@ -24,7 +43,7 @@ const addAddressResolver = async (parent, args, context) => {
     savedUser.address.push(address._id)
     await savedUser.save()
     if (!savedUser) {
-      throw new Error('Could not update address in User model')
+      throw new UpdateAddressError()
     }
     return address
   } catch (err) {
@@ -38,19 +57,22 @@ const addAddressResolver = async (parent, args, context) => {
 const removeAddressResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
-    throw new Error('Must be logged in')
+    throw new AuthError()
   }
 
   try {
+    if (!user.isAuthorizedTo(REMOVE_ADDRESS)) {
+      throw new PermitError()
+    }
     const savedUser = await User.findById(user._id)
     if (!savedUser) {
-      throw new Error('Could not find user in User model')
+      throw new UserFindError()
     }
 
     // Check if address ID provided is in user's list of addresses.
     const index = savedUser.address.indexOf(args.id)
     if (index === -1) {
-      throw new Error('Unauthorized to delete this address')
+      throw new PermitDeleteAddressError()
     }
 
     // Delete from user's list of addresses.
@@ -82,19 +104,22 @@ const removeAddressResolver = async (parent, args, context) => {
 const updateAddressResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
-    throw new Error('Must be logged in')
+    throw new AuthError()
   }
 
   try {
+    if (!user.isAuthorizedTo(UPDATE_ADDRESS)) {
+      throw new PermitError()
+    }
     const savedUser = await User.findById(user._id).populate('order')
     if (!savedUser) {
-      throw new Error('Could not find user in User model')
+      throw new UserFindError()
     }
 
     // Check if address ID provided is in user's list of addresses.
     const index = savedUser.address.indexOf(args.id)
     if (index === -1) {
-      throw new Error('Unauthorized to update this address')
+      throw new PermitUpdateAddressError()
     }
 
     // Check if an order by the user contains this address.
@@ -116,7 +141,7 @@ const updateAddressResolver = async (parent, args, context) => {
         }
       )
       if (!updatedAddress) {
-        throw new Error('Error in updating address')
+        throw new UpdateAddressError()
       }
       return updatedAddress
     }
