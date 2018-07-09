@@ -8,43 +8,35 @@ import {
   REMOVE_ADDRESS,
   UPDATE_ADDRESS,
 } from '../../../database/operations'
-import AppError from '../../../Errors/error'
 import {
-  AddAddressError,
-  UpdateAddressError,
-} from '../../../Errors/addressError'
-import PermitError from '../../../Errors/permitError'
-import AuthError from '../../../Errors/authError'
-import {
-  PermitUpdateAddressError,
-  PermitDeleteAddressError,
-  UserFindError,
-} from '../../../Errors/permitAddressError'
+  AuthenticationError,
+  AuthorizationError,
+  AddressUnassociatedError,
+} from '../../../errors/'
 
 const addAddressResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
-    throw new AuthError()
+    throw new AuthenticationError()
   }
+
   // New address created should have a predefined ID.
   args._id = new Types.ObjectId()
   try {
     if (!user.isAuthorizedTo(ADD_ADDRESS)) {
-      throw new PermitError()
-    }
-    // Save address to Address collection.
-    const address = await Address(args).save()
-    if (!address) {
-      throw new AddAddressError()
+      throw new AuthorizationError()
     }
 
+    // Save address to Address collection.
+    const address = await Address.create(args)
+
     // Add address to User's list of addresses.
-    const savedUser = await User.findById(user._id)
-    savedUser.address.push(address._id)
-    await savedUser.save()
-    if (!savedUser) {
-      throw new UpdateAddressError()
-    }
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { address: address._id } },
+      { new: true, runValidators: true }
+    )
+
     return address
   } catch (err) {
     // Reaching here means that user may have reached  his limit for adding addresses.
@@ -57,28 +49,23 @@ const addAddressResolver = async (parent, args, context) => {
 const removeAddressResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
-    throw new AuthError()
+    throw new AuthenticationError()
   }
 
   try {
     if (!user.isAuthorizedTo(REMOVE_ADDRESS)) {
-      throw new PermitError()
-    }
-    const savedUser = await User.findById(user._id)
-    if (!savedUser) {
-      throw new UserFindError()
+      throw new AuthorizationError()
     }
 
     // Check if address ID provided is in user's list of addresses.
-    const index = savedUser.address.indexOf(args.id)
+    const index = user.address.indexOf(args.id)
     if (index === -1) {
-      throw new PermitDeleteAddressError()
+      throw new AddressUnassociatedError()
     }
 
     // Delete from user's list of addresses.
-    savedUser.address.splice(index, 1)
-    await savedUser.save()
-    const updatedUser = await User.findById(savedUser._id)
+    await User.findByIdAndUpdate(user._id, { $pull: { address: args.id } })
+    const updatedUser = await User.findById(user._id)
       .populate('order')
       .populate('address')
 
@@ -104,27 +91,23 @@ const removeAddressResolver = async (parent, args, context) => {
 const updateAddressResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
-    throw new AuthError()
+    throw new AuthenticationError()
   }
 
   try {
     if (!user.isAuthorizedTo(UPDATE_ADDRESS)) {
-      throw new PermitError()
-    }
-    const savedUser = await User.findById(user._id).populate('order')
-    if (!savedUser) {
-      throw new UserFindError()
+      throw new AuthorizationError()
     }
 
     // Check if address ID provided is in user's list of addresses.
-    const index = savedUser.address.indexOf(args.id)
+    const index = user.address.indexOf(args.id)
     if (index === -1) {
-      throw new PermitUpdateAddressError()
+      throw new AddressUnassociatedError()
     }
 
     // Check if an order by the user contains this address.
     let addressInOrder = false
-    savedUser.order.forEach(order => {
+    user.order.forEach(order => {
       if (order.shippingAddress.toString() === args.id.toString()) {
         addressInOrder = true
       }
@@ -132,17 +115,11 @@ const updateAddressResolver = async (parent, args, context) => {
 
     if (!addressInOrder) {
       // If address isn't used by any order, then it is safe to update it.
-      const updatedAddress = await Address.findByIdAndUpdate(
-        { _id: args.id },
-        args,
-        {
-          new: true,
-          runValidators: true,
-        }
-      )
-      if (!updatedAddress) {
-        throw new UpdateAddressError()
-      }
+      const updatedAddress = await Address.findByIdAndUpdate(args.id, args, {
+        new: true,
+        runValidators: true,
+      })
+
       return updatedAddress
     }
 
@@ -156,10 +133,11 @@ const updateAddressResolver = async (parent, args, context) => {
       'zip',
       'country',
     ])
-    const newAddress = await new Address(addressArgs).save()
-
-    savedUser.address.splice(index, 1, newAddress._id)
-    await savedUser.save()
+    const newAddress = await Address.create(addressArgs)
+    await User.findByIdAndUpdate(user._id, {
+      $pull: { address: args.id },
+      $push: { address: newAddress._id },
+    })
 
     return newAddress
   } catch (err) {

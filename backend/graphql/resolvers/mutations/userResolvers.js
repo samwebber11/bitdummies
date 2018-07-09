@@ -1,19 +1,21 @@
 import User from '../../../database/models/user'
-import AppError from '../../../Errors/error'
 import { CHANGE_USER_ROLE, UPDATE_USER } from '../../../database/operations'
-import { RoleChangeError, RoleCheckError } from '../../../Errors/roleError'
-import AuthError from '../../../Errors/authError'
-import PermitError from '../../../Errors/permitError'
-import { OrderPendingError } from '../../../Errors/orderError'
+import {
+  AuthenticationError,
+  AuthorizationError,
+  OrderPendingError,
+  InvalidRolesError,
+} from '../../../errors/'
 
 // This resolver is not required.
 const addUserResolver = async (parent, args, context) => {
   const { user } = context
   if (user) {
-    throw new RoleChangeError()
+    throw new AuthenticationError()
   }
+
   try {
-    return await new User(args).save()
+    return await User.create(args)
   } catch (err) {
     throw err
   }
@@ -23,7 +25,7 @@ const addUserResolver = async (parent, args, context) => {
 const removeUserResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
-    throw new AuthError()
+    throw new AuthenticationError()
   }
 
   try {
@@ -45,12 +47,12 @@ const removeUserResolver = async (parent, args, context) => {
 const updateUserResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
-    throw new AuthError()
+    throw new AuthenticationError()
   }
 
   try {
     if (!user.isAuthorizedTo(UPDATE_USER)) {
-      throw new PermitError()
+      throw new AuthorizationError()
     }
     const updatedUser = await User.findByIdAndUpdate(user._id, args, {
       new: true,
@@ -65,17 +67,17 @@ const updateUserResolver = async (parent, args, context) => {
 const changeUserRoleResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
-    throw new AuthError()
+    throw new AuthenticationError()
   }
 
   try {
     if (!user.isAuthorizedTo(CHANGE_USER_ROLE)) {
-      throw new PermitError()
+      throw new AuthorizationError()
     }
 
     const { id, roles } = args
     if (!roles) {
-      throw new RoleCheckError()
+      throw new InvalidRolesError()
     }
 
     return await User.findByIdAndUpdate(
