@@ -1,5 +1,4 @@
 import Product from '../../../database/models/product'
-import User from '../../../database/models/user'
 import { pick } from '../../../utils'
 import {
   ADD_PRODUCT,
@@ -8,23 +7,22 @@ import {
   UPDATE_PRODUCT_IMAGES,
   UPDATE_PRODUCT_QUANTITY,
 } from '../../../database/operations'
-import AppError from '../../../Errors/error'
-import PermitError from '../../../Errors/permitError'
-import AuthError from '../../../Errors/authError'
-import { InvalidCredentialsError } from '../../../Errors/productError'
+import AuthenticationError from '../../../errors/AuthenticationError'
+import AuthorizationError from '../../../errors/AuthorizationError'
+import InvalidSizeError from '../../../errors/InvalidSizeError'
+import ProductNotFoundError from '../../../errors/ProductNotFoundError'
 
 const addProductResolver = async (parent, args, context) => {
-  // TODO: Check for admin authorization here.
   const { user } = context
   if (!user) {
-    throw new AuthError()
+    throw new AuthenticationError()
   }
 
   try {
     if (!user.isAuthorizedTo(ADD_PRODUCT)) {
-      throw new PermitError()
+      throw new AuthorizationError()
     }
-    const product = await new Product(args).save()
+    const product = await Product.create(args)
     return product
   } catch (err) {
     throw err
@@ -34,12 +32,12 @@ const addProductResolver = async (parent, args, context) => {
 const removeProductResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
-    throw new AuthError()
+    throw new AuthenticationError()
   }
 
   try {
     if (!user.isAuthorizedTo(REMOVE_PRODUCT)) {
-      throw new PermitError()
+      throw new AuthorizationError()
     }
     const removedProduct = await Product.findByIdAndRemove(args.id)
     return removedProduct
@@ -51,12 +49,12 @@ const removeProductResolver = async (parent, args, context) => {
 const updateProductInfoResolver = async (parent, args, context) => {
   const { user } = context
   if (!user) {
-    throw new AuthError()
+    throw new AuthenticationError()
   }
 
   try {
     if (!user.isAuthorizedTo(UPDATE_PRODUCT_INFO)) {
-      throw new PermitError()
+      throw new AuthorizationError()
     }
     const productArgs = pick(args, [
       'name',
@@ -79,16 +77,16 @@ const updateProductInfoResolver = async (parent, args, context) => {
 }
 
 const updateProductImagesResolver = async (parent, args, context) => {
-  // TODO: Check for admin authorization here.
   const { user } = context
   if (!user) {
-    throw new AuthError()
+    throw new AuthenticationError()
   }
 
   try {
     if (!user.isAuthorizedTo(UPDATE_PRODUCT_IMAGES)) {
-      throw new PermitError()
+      throw new AuthorizationError()
     }
+
     const productArgs = pick(args, ['imagePath'])
     const product = await Product.findByIdAndUpdate(args.id, productArgs, {
       new: true,
@@ -101,24 +99,23 @@ const updateProductImagesResolver = async (parent, args, context) => {
 }
 
 const updateProductQuantityResolver = async (parent, args, context) => {
-  // TODO: Check for admin authorization here.
   const { user } = context
   if (!user) {
-    throw new AuthError()
+    throw new AuthenticationError()
   }
   try {
     if (!user.isAuthorizedTo(UPDATE_PRODUCT_QUANTITY)) {
-      throw new PermitError()
+      throw new AuthorizationError()
     }
     const productArgs = pick(args, ['size'])
 
     if (!productArgs.size) {
-      throw new InvalidCredentialsError()
+      throw new InvalidSizeError()
     }
 
     const oldProduct = await Product.findById(args.id)
     if (!oldProduct) {
-      return null
+      throw new ProductNotFoundError()
     }
 
     const sizes = oldProduct.size.map(size => ({
