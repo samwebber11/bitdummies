@@ -9,6 +9,8 @@ import {
 import ProductType from '../types/ProductType'
 import OrderByType from '../types/OrderByType'
 import Product from '../../database/models/product'
+import User from '../../database/models/user'
+import { QUERY_PRODUCT, QUERY_PRODUCTS } from '../../database/operations'
 
 // Fetch the list of all products (can be filtered).
 const products = {
