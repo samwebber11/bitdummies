@@ -10,10 +10,8 @@ import UserType from '../types/UserType'
 import OrderByType from '../types/OrderByType'
 import User from '../../database/models/user'
 import { GET_USER_BY_ID, GET_ALL_USERS } from '../../database/operations'
-
-import AppError from '../../Errors/error'
-import AuthError from '../../Errors/authError'
-import PermitError from '../../Errors/permitError'
+import AuthenticationError from '../../errors/AuthenticationError'
+import AuthorizationError from '../../errors/AuthorizationError'
 
 // Fetch the list of all users (can be filtered).
 const users = {
@@ -68,16 +66,15 @@ const users = {
   resolve: async (parent, args, context) => {
     const { user } = context
     if (!user) {
-      throw new AuthError()
+      throw new AuthenticationError()
     }
     try {
       if (!user.isAuthorizedTo(GET_ALL_USERS)) {
-        throw new PermitError()
+        throw new AuthorizationError()
       }
       const userList = await User.find(args.filters).sort(args.orderBy)
       return userList
     } catch (err) {
-      console.log('Error occurred in fetching users: ', err)
       throw err
     }
   },
@@ -92,18 +89,18 @@ const user = {
     },
   },
   resolve: async (parent, args, context) => {
+    // eslint-disable-next-line no-shadow
     const { user } = context
     if (!user) {
-      throw new AuthError()
+      throw new AuthenticationError()
     }
     try {
       if (!user.isAuthorizedTo(GET_USER_BY_ID)) {
-        throw new PermitError()
+        throw new AuthorizationError()
       }
       const userStored = await User.findById(args.id)
       return userStored
     } catch (err) {
-      console.log('Error Occured in fetching user by ID: ', err)
       throw err
     }
   },

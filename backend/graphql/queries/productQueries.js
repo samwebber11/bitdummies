@@ -9,8 +9,6 @@ import {
 import ProductType from '../types/ProductType'
 import OrderByType from '../types/OrderByType'
 import Product from '../../database/models/product'
-import User from '../../database/models/user'
-import { QUERY_PRODUCT, QUERY_PRODUCTS } from '../../database/operations'
 
 // Fetch the list of all products (can be filtered).
 const products = {
@@ -43,12 +41,11 @@ const products = {
       }),
     },
   },
-  resolve: async (parent, args, { user }) => {
+  resolve: async (parent, args) => {
     try {
       const productsList = await Product.find(args.filters).sort(args.orderBy)
       return productsList
     } catch (err) {
-      console.log('Error occurred in fetching products: ', err)
       throw err
     }
   },
@@ -62,12 +59,11 @@ const product = {
       type: new GraphQLNonNull(GraphQLID),
     },
   },
-  resolve: async (parent, args, { user }) => {
+  resolve: async (parent, args) => {
     try {
       const dbProduct = await Product.findById(args.id)
       return dbProduct
     } catch (err) {
-      console.log('Error occurred in fetching product by ID: ', err)
       throw err
     }
   },
