@@ -17,7 +17,7 @@ import {
   AddressNotFoundError,
   AddressUnassociatedError,
   OrderNotFoundError,
-  OrderCancellationError,
+  OrderStatusError,
   OrderUnassociatedError,
   ProductNotFoundError,
   ProductUnassociatedError,
@@ -161,7 +161,7 @@ const cancelOrderResolver = async (parent, args, context) => {
       throw new OrderNotFoundError()
     }
     if (order.status !== 'Processing') {
-      throw new OrderCancellationError()
+      throw new OrderStatusError()
     }
 
     // Check to see if the order is in the user's list of orders.
@@ -225,7 +225,7 @@ const removeProductFromOrderResolver = async (parent, args, context) => {
       throw new OrderNotFoundError()
     }
     if (order.status !== 'Processing') {
-      throw new OrderCancellationError()
+      throw new OrderStatusError()
     }
 
     // Check to see if the order is in the user's list of orders.

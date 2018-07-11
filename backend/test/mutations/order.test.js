@@ -12,18 +12,21 @@ import {
   removeProductFromOrderResolver,
   changeOrderStatusResolver,
 } from '../../graphql/resolvers/mutations/orderResolvers'
-import { AuthenticationError,
-  OrderCancellationError,
-  OrderUnassociatedError,
-  InvalidArgsError,
-  ProductNotFoundError,
-  InvalidOrderStatusError,
-  OrderNotFoundError,
-  AddressUnassociatedError,
-  InvalidQuantityError
-} from '../../errors';
 import { merge, shuffleArray } from '../../utils'
 import { connectMongoose, disconnectMongoose } from '../helper'
+import {
+  AuthenticationError,
+  InvalidArgsError,
+  ProductNotFoundError,
+  InvalidQuantityError,
+  AddressNotFoundError,
+  AddressUnassociatedError,
+  OrderNotFoundError,
+  OrderStatusError,
+  OrderUnassociatedError,
+  ProductUnassociatedError,
+  InvalidOrderStatusError,
+} from '../../errors'
 
 beforeAll(connectMongoose)
 afterAll(disconnectMongoose)
@@ -409,7 +412,7 @@ describe('addOrder resolver', () => {
     const orderArgs = { products: orderProducts, shippingAddress: address._id }
     await expect(
       addOrderResolver(null, orderArgs, { user: savedUser })
-    ).rejects.toThrow(new InvalidArgsError())
+    ).rejects.toThrow(new AddressNotFoundError())
 
     // Cleanup.
     await User.findByIdAndUpdate(user._id, { $pull: { address: address._id } })
@@ -926,7 +929,7 @@ describe('cancelOrder resolver', () => {
       orderIDs.map(async orderID => {
         await expect(
           cancelOrderResolver(null, { id: orderID }, { user: savedUser })
-        ).rejects.toThrow(new OrderCancellationError())
+        ).rejects.toThrow(new OrderStatusError())
       })
     )
 
@@ -1341,7 +1344,7 @@ describe('removeProductFromOrder resolver', () => {
     }
     await expect(
       removeProductFromOrderResolver(null, args, { user: savedUser })
-    ).rejects.toThrow(new InvalidArgsError())
+    ).rejects.toThrow(new OrderNotFoundError())
 
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
@@ -1416,7 +1419,7 @@ describe('removeProductFromOrder resolver', () => {
             { id: orderID, product: productToBeRemoved._id },
             { user: savedUser }
           )
-        ).rejects.toThrow(new OrderCancellationError())
+        ).rejects.toThrow(new OrderStatusError())
       })
     )
 
@@ -1536,7 +1539,7 @@ describe('removeProductFromOrder resolver', () => {
     const args = { id: order._id, product: new Types.ObjectId() }
     await expect(
       removeProductFromOrderResolver(null, args, { user: savedUser })
-    ).rejects.toThrow(new InvalidArgsError())2
+    ).rejects.toThrow(new ProductNotFoundError())
 
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
@@ -1596,7 +1599,7 @@ describe('removeProductFromOrder resolver', () => {
     const args = { id: order._id, product: unorderedProduct._id }
     await expect(
       removeProductFromOrderResolver(null, args, { user: savedUser })
-    ).rejects.toThrow(new ProductNotFoundError())
+    ).rejects.toThrow(new ProductUnassociatedError())
 
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
@@ -1897,7 +1900,7 @@ describe('changeOrderStatus resolver', () => {
     const status = 'Delivered'
     const args = { id: order._id, status }
     await expect(changeOrderStatusResolver(null, args, {})).rejects.toThrow(
-      'Unauthorized'
+      new AuthenticationError()
     )
 
     // Cleanup.

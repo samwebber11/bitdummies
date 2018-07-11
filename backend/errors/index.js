@@ -4,10 +4,10 @@ import AuthenticationError from './AuthenticationError'
 import AuthorizationError from './AuthorizationError'
 import InvalidArgsError from './InvalidArgsError'
 import InvalidOrderStatusError from './InvalidOrderStatusError'
+import InvalidQuantityError from './InvalidQuantityError'
 import InvalidRolesError from './InvalidRolesError'
 import InvalidSizeError from './InvalidSizeError'
-import InvalidQuantityError from './InvalidQuantityError'
-import OrderCancellationError from './OrderCancellationError'
+import OrderStatusError from './OrderStatusError'
 import OrderNotFoundError from './OrderNotFoundError'
 import OrderPendingError from './OrderPendingError'
 import OrderUnassociatedError from './OrderUnassociatedError'
@@ -21,12 +21,12 @@ export {
   AuthorizationError,
   InvalidArgsError,
   InvalidOrderStatusError,
+  InvalidQuantityError,
   InvalidRolesError,
   InvalidSizeError,
-  InvalidQuantityError,
-  OrderCancellationError,
   OrderNotFoundError,
   OrderPendingError,
+  OrderStatusError,
   OrderUnassociatedError,
   ProductNotFoundError,
   ProductUnassociatedError,
