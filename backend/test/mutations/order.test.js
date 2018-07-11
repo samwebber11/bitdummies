@@ -138,6 +138,7 @@ describe('addOrder resolver', () => {
       { $push: { address: address._id } },
       { new: true, runValidators: true }
     )
+    // const checkUser = await
 
     const orderArgs = { products: orderProducts, shippingAddress: address._id }
     const order = await addOrderResolver(null, orderArgs, { user: savedUser })
