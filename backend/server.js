@@ -7,6 +7,8 @@ import fs from 'fs'
 import graphqlHTTP from 'express-graphql'
 import cors from 'cors'
 import path from 'path'
+import compression from 'compression'
+import helmet from 'helmet'
 
 import router from './routes'
 import authRouter from './routes/auth'
@@ -17,6 +19,9 @@ import schema from './graphql/'
 
 const app = express()
 const PORT = process.env.PORT || 3001
+
+// Protect against vulnerabilities.
+app.use(helmet())
 
 // Middleware.
 app.use(cors({ origin: 'http://localhost:3000', credentials: true }))
@@ -31,7 +36,11 @@ app.use(
   })
 )
 
+// Compress all routes.
+app.use(compression())
+
 // Serving static files/images.
+app.use(express.static(path.join(__dirname, '../client/build')))
 app.use('/static', express.static(path.join(__dirname, 'public')))
 
 // Initialize Passport.
