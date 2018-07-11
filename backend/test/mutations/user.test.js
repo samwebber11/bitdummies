@@ -9,6 +9,11 @@ import {
 } from '../../graphql/resolvers/mutations/userResolvers'
 import { merge } from '../../utils'
 import { connectMongoose, disconnectMongoose } from '../helper'
+import {
+  AuthenticationError,
+  AuthorizationError,
+  InvalidRolesError,
+} from '../../errors'
 
 beforeAll(connectMongoose)
 afterAll(disconnectMongoose)
@@ -113,7 +118,7 @@ describe('updateUser resolver', () => {
         },
         {}
       )
-    ).rejects.toThrow('Must be logged in')
+    ).rejects.toThrow(new AuthenticationError())
   })
 
   it('Should not update when a field is invalid', async () => {
@@ -180,7 +185,7 @@ describe('changeUserRole resolver', () => {
     }
 
     await expect(changeUserRoleResolver(null, args, {})).rejects.toThrow(
-      'Must be logged in'
+      new AuthenticationError()
     )
 
     // Cleanup.
@@ -201,7 +206,7 @@ describe('changeUserRole resolver', () => {
 
     await expect(
       changeUserRoleResolver(null, args, { user: unauthorizedUser })
-    ).rejects.toThrow('Unauthorized')
+    ).rejects.toThrow(new AuthorizationError())
 
     // Cleanup.
     await User.deleteMany({ _id: { $in: [unauthorizedUser._id, newUser._id] } })
@@ -220,7 +225,7 @@ describe('changeUserRole resolver', () => {
       changeUserRoleResolver(null, args, {
         user: savedUser,
       })
-    ).rejects.toThrow('Invalid roles')
+    ).rejects.toThrow(new InvalidRolesError())
 
     // Cleanup.
     await User.findByIdAndRemove(newUser._id)

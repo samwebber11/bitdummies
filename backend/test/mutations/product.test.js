@@ -13,6 +13,11 @@ import {
 } from '../../graphql/resolvers/mutations/productResolvers'
 import { merge, pick } from '../../utils'
 import { connectMongoose, disconnectMongoose } from '../helper'
+import {
+  AuthenticationError,
+  InvalidSizeError,
+  ProductNotFoundError,
+} from '../../errors'
 
 beforeAll(connectMongoose)
 afterAll(disconnectMongoose)
@@ -61,7 +66,7 @@ describe('addProduct resolver', () => {
   it('Should not add a product when there is no user', async () => {
     expect.assertions(1)
     await expect(addProductResolver(null, dummyProduct, {})).rejects.toThrow(
-      'Unauthorized'
+      new AuthenticationError()
     )
   })
 
@@ -330,7 +335,7 @@ describe('updateProductInfo resolver', async () => {
 
     await expect(
       updateProductInfoResolver(null, productArgs, {})
-    ).rejects.toThrow('Unauthorized')
+    ).rejects.toThrow(new AuthenticationError())
   })
 
   it(`Should not update a product that doesn't exist`, async () => {
@@ -500,7 +505,7 @@ describe('updateProductImages resolver', () => {
 
     await expect(
       updateProductImagesResolver(null, productArgs, {})
-    ).rejects.toThrow('Unauthorized')
+    ).rejects.toThrow(new AuthenticationError())
   })
 
   it(`Should not update a product that doesn't exist`, async () => {
@@ -664,21 +669,18 @@ describe('updateProductQuantity resolver', () => {
 
     await expect(
       updateProductQuantityResolver(null, productArgs, {})
-    ).rejects.toThrow('Unauthorized')
+    ).rejects.toThrow(new AuthenticationError())
   })
 
   it(`Should not update a product that doesn't exist`, async () => {
     expect.assertions(1)
     const savedUser = await User.findById(user._id)
     const productArgs = merge(updatePayload, { id: new Types.ObjectId() })
-    const updatedProduct = await updateProductQuantityResolver(
-      null,
-      productArgs,
-      {
+    await expect(
+      updateProductQuantityResolver(null, productArgs, {
         user: savedUser,
-      }
-    )
-    expect(updatedProduct).toBeNull()
+      })
+    ).rejects.toThrow(new ProductNotFoundError())
   })
 
   it(`Should not update when 'size' field is missing`, async () => {
@@ -696,7 +698,7 @@ describe('updateProductQuantity resolver', () => {
       updateProductQuantityResolver(null, productArgs, {
         user: savedUser,
       })
-    ).rejects.toThrow('Must provide label and quantity for size')
+    ).rejects.toThrow(new InvalidSizeError())
   })
 })
 
@@ -728,7 +730,7 @@ describe('removeProduct resolver', () => {
     const product = products[productIndex]
 
     await expect(removeProductResolver(null, product, {})).rejects.toThrow(
-      'Unauthorized'
+      new AuthenticationError()
     )
   })
 
