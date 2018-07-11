@@ -964,47 +964,104 @@ describe('updateProductQuantity resolver', () => {
 })
 
 describe('removeProduct resolver', () => {
-  const user = {
-    _id: '5b39f7bb26670102359a8c10',
+  const dummyUser = {
+    provider: {
+      name: 'google',
+      id: Math.floor(Math.random() * 1000000).toString(),
+    },
+    email: 'dexter.jacobi@gmail.com',
+    firstName: 'Sedrick',
+    lastName: 'Gulgowski',
+  }
+
+  const dummyProduct = {
+    name: 'Handcrafted Plastic Computer',
+    category: 'Shoes',
+    size: [
+      {
+        label: 'XS',
+        quantityAvailable: 5,
+      },
+      {
+        label: 'M',
+        quantityAvailable: 10,
+      },
+    ],
+    description: 'Eum sunt dicta enim animi enim.',
+    actualPrice: 984.99,
+    discount: 5,
+    tax: 12.5,
+    imagePath: [
+      'Optio labore laudantium et et a eaque sed',
+      'Neque non ullam nam qui corrupti similique officia aut quis',
+      'Et explicabo aut dicta',
+    ],
+    delicacy: 'medium',
   }
 
   it('Should remove a product', async () => {
     expect.assertions(1)
-    const savedUser = await User.findById(user._id)
-    const products = await Product.find({})
-    const productIndex = Math.floor(Math.random() * products.length)
-    const product = products[productIndex]
+    // Setup.
+    const product = await Product.create(dummyProduct)
+    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
 
+    // Actual test begins.
     const removedProduct = await removeProductResolver(
       null,
       { id: product._id },
-      { user: savedUser }
+      { user }
     )
     // Hack to avoid hitting the call stack.
     expect(JSON.stringify(removedProduct)).toEqual(JSON.stringify(product))
+
+    // Cleanup.
+    await User.findByIdAndRemove(user._id)
   })
 
   it('Should not remove a product when there is no user', async () => {
     expect.assertions(1)
-    const products = await Product.find({})
-    const productIndex = Math.floor(Math.random() * products.length)
-    const product = products[productIndex]
+    // Setup.
+    const product = await Product.create(dummyProduct)
 
-    await expect(removeProductResolver(null, product, {})).rejects.toThrow(
-      new AuthenticationError()
-    )
+    // Actual test begins.
+    await expect(
+      removeProductResolver(null, { id: product._id }, {})
+    ).rejects.toThrow(new AuthenticationError())
+
+    // Cleanup.
+    await Product.findByIdAndRemove(product._id)
+  })
+
+  it('Should not remove a product when the user is not authorized to remove a product', async () => {
+    expect.assertions(1)
+    // Setup.
+    const product = await Product.create(dummyProduct)
+    const user = await User.create(dummyUser)
+
+    // Actual test begins.
+    await expect(
+      removeProductResolver(null, { id: product._id }, { user })
+    ).rejects.toThrow(new AuthorizationError())
+
+    // Cleanup.
+    await Product.findByIdAndRemove(product._id)
+    await User.findByIdAndRemove(user._id)
   })
 
   it(`Should not remove a product that doesn't exist`, async () => {
     expect.assertions(1)
-    const savedUser = await User.findById(user._id)
-    const productID = new Types.ObjectId()
+    // Setup.
+    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
 
+    // Actual test begins.
     const removedProduct = await removeProductResolver(
       null,
-      { id: productID },
-      { user: savedUser }
+      { id: new Types.ObjectId() },
+      { user }
     )
     expect(removedProduct).toBeNull()
+
+    // Cleanup.
+    await User.findByIdAndRemove(user._id)
   })
 })
