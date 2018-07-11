@@ -53,6 +53,7 @@
     "testRegex": ".*/test/.*.test.js"
   },
   "scripts": {
+    "start": "cd backend && node server.js --exec babel-node --presets env",
     "start:server": "cd backend && nodemon server.js --exec babel-node --presets env",
     "start:client": "cd client && yarn start",
     "start:dev": "NODE_ENV=development concurrently \"yarn start:server\" \"yarn start:client\"",
