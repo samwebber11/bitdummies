@@ -12,6 +12,7 @@ import {
 } from '../../graphql/resolvers/mutations/addressResolvers'
 import { merge } from '../../utils'
 import { connectMongoose, disconnectMongoose } from '../helper'
+import { AddressUnassociatedError, AuthenticationError } from '../../errors'
 
 beforeAll(connectMongoose)
 afterAll(disconnectMongoose)
@@ -44,7 +45,7 @@ describe('addAddress resolver', () => {
   it('Should not add an address when there is no user', async () => {
     expect.assertions(1)
     await expect(addAddressResolver(null, dummyAddress, {})).rejects.toThrow(
-      'Must be logged in'
+      new AuthenticationError()
     )
   })
 
@@ -167,7 +168,7 @@ describe('updateAddress resolver', () => {
         merge(updatePayload, { id: savedUser.address[addressIndex]._id }),
         {}
       )
-    ).rejects.toThrow('Must be logged in')
+    ).rejects.toThrow(new AuthenticationError())
   })
 
   it(`Should not update an address when the address is not in user's list of addresses`, async () => {
@@ -179,7 +180,7 @@ describe('updateAddress resolver', () => {
         merge(updatePayload, { id: new Types.ObjectId() }),
         { user: savedUser }
       )
-    ).rejects.toThrow('Unauthorized to update this address')
+    ).rejects.toThrow(new AddressUnassociatedError())
   })
 
   it('Should not update an address when a field is invalid', async () => {
@@ -284,7 +285,7 @@ describe('removeAddress resolver', () => {
         { id: savedUser.address[addressIndex]._id },
         {}
       )
-    ).rejects.toThrow('Must be logged in')
+    ).rejects.toThrow(new AuthenticationError())
   })
 
   it(`Should not delete an address when the address is not in user's list of addresses`, async () => {
@@ -296,7 +297,7 @@ describe('removeAddress resolver', () => {
         { id: new Types.ObjectId() },
         { user: savedUser }
       )
-    ).rejects.toThrow('Unauthorized to delete this address')
+    ).rejects.toThrow(new AddressUnassociatedError())
   })
 
   it(`Should delete an address only from user's list of addresses when an order by the user contains this address`, async () => {

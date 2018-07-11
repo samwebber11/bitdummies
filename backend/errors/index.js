@@ -6,6 +6,7 @@ import InvalidArgsError from './InvalidArgsError'
 import InvalidOrderStatusError from './InvalidOrderStatusError'
 import InvalidRolesError from './InvalidRolesError'
 import InvalidSizeError from './InvalidSizeError'
+import InvalidQuantityError from './InvalidQuantityError'
 import OrderCancellationError from './OrderCancellationError'
 import OrderNotFoundError from './OrderNotFoundError'
 import OrderPendingError from './OrderPendingError'
@@ -22,6 +23,7 @@ export {
   InvalidOrderStatusError,
   InvalidRolesError,
   InvalidSizeError,
+  InvalidQuantityError,
   OrderCancellationError,
   OrderNotFoundError,
   OrderPendingError,
