@@ -31,11 +31,9 @@ const addAddressResolver = async (parent, args, context) => {
     const address = await Address.create(args)
 
     // Add address to User's list of addresses.
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const savedUser = await User.findById(user._id)
+    savedUser.address.push(address._id)
+    await savedUser.save()
 
     return address
   } catch (err) {
@@ -105,25 +103,6 @@ const updateAddressResolver = async (parent, args, context) => {
       throw new AddressUnassociatedError()
     }
 
-    // Check if an order by the user contains this address.
-    let addressInOrder = false
-    user.order.forEach(order => {
-      if (order.shippingAddress.toString() === args.id.toString()) {
-        addressInOrder = true
-      }
-    })
-
-    if (!addressInOrder) {
-      // If address isn't used by any order, then it is safe to update it.
-      const updatedAddress = await Address.findByIdAndUpdate(args.id, args, {
-        new: true,
-        runValidators: true,
-      })
-
-      return updatedAddress
-    }
-
-    // Else, create a new address and just update the ID in user's list of addresses.
     const addressArgs = pick(args, [
       'address1',
       'address2',
@@ -133,11 +112,35 @@ const updateAddressResolver = async (parent, args, context) => {
       'zip',
       'country',
     ])
-    const newAddress = await Address.create(addressArgs)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: args.id },
-      $push: { address: newAddress._id },
+
+    // Check if an order by the user contains this address.
+    let addressInOrder = false
+    const userWithOrders = await User.findById(user._id).populate('order')
+    userWithOrders.order.forEach(order => {
+      if (order.shippingAddress.toString() === args.id.toString()) {
+        addressInOrder = true
+      }
     })
+
+    if (!addressInOrder) {
+      // If address isn't used by any order, then it is safe to update it.
+      const updatedAddress = await Address.findByIdAndUpdate(
+        args.id,
+        addressArgs,
+        {
+          new: true,
+          runValidators: true,
+        }
+      )
+
+      return updatedAddress
+    }
+
+    // Else, create a new address and just update the ID in user's list of addresses.
+    const newAddress = await Address.create(addressArgs)
+    const savedUser = await User.findById(user._id)
+    savedUser.address.splice(index, 1, newAddress._id)
+    await savedUser.save()
 
     return newAddress
   } catch (err) {

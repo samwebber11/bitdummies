@@ -11,8 +11,8 @@ import { merge } from '../../utils'
 import { connectMongoose, disconnectMongoose } from '../helper'
 import {
   AuthenticationError,
-  InvalidRolesError,
   AuthorizationError,
+  InvalidRolesError,
 } from '../../errors'
 
 beforeAll(connectMongoose)
@@ -118,7 +118,7 @@ describe('updateUser resolver', () => {
         },
         {}
       )
-    ).rejects.toThrow('Must be logged in')
+    ).rejects.toThrow(new AuthenticationError())
   })
 
   it('Should not update when a field is invalid', async () => {
