@@ -12,13 +12,24 @@ import {
 } from '../../graphql/resolvers/mutations/addressResolvers'
 import { merge } from '../../utils'
 import { connectMongoose, disconnectMongoose } from '../helper'
+import {
+  AuthenticationError,
+  AddressUnassociatedError,
+  AuthorizationError,
+} from '../../errors'
 
 beforeAll(connectMongoose)
 afterAll(disconnectMongoose)
 
 describe('addAddress resolver', () => {
-  const user = {
-    _id: '5b39f7bb26670102359a8c10',
+  const dummyUser = {
+    provider: {
+      name: 'google',
+      id: Math.floor(Math.random() * 1000000).toString(),
+    },
+    email: 'dexter.jacobi@gmail.com',
+    firstName: 'Sedrick',
+    lastName: 'Gulgowski',
   }
 
   const dummyAddress = {
@@ -32,24 +43,51 @@ describe('addAddress resolver', () => {
   }
 
   it(`Should add an address to user's list of addresses`, async () => {
-    expect.assertions(2)
-    const savedUser = await User.findById(user._id)
-    const address = await addAddressResolver(null, dummyAddress, {
-      user: savedUser,
-    })
+    expect.assertions(5)
+    // Setup.
+    const user = await User.create(dummyUser)
+
+    // Actual test begins.
+    const address = await addAddressResolver(null, dummyAddress, { user })
     expect(address).toHaveProperty('_id')
     expect(address).toMatchObject(dummyAddress)
+
+    const updatedUser = await User.findById(user._id)
+    expect(updatedUser).toHaveProperty('address')
+    expect(updatedUser.address).toHaveLength(1)
+    expect(updatedUser.address).toContainEqual(address._id)
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await User.findByIdAndRemove(user._id)
   })
 
   it('Should not add an address when there is no user', async () => {
     expect.assertions(1)
     await expect(addAddressResolver(null, dummyAddress, {})).rejects.toThrow(
-      'Must be logged in'
+      new AuthenticationError()
     )
+  })
+
+  it('Should not add an address when the user is not authorized to add an address', async () => {
+    expect.assertions(1)
+    // Setup.
+    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
+
+    // Actual test begins.
+    await expect(
+      addAddressResolver(null, dummyAddress, { user })
+    ).rejects.toThrow(new AuthorizationError())
+
+    // Cleanup.
+    await User.findByIdAndRemove(user._id)
   })
 
   it('Should not add address when fields are missing', async () => {
     expect.assertions(1)
+    // Setup.
+    const user = await User.create(dummyUser)
+
     // Missing `address` field.
     const invalidAddress = {
       address2: 'Apt. 860',
@@ -60,14 +98,20 @@ describe('addAddress resolver', () => {
       country: 'Czech Republic',
     }
 
-    const savedUser = await User.findById(user._id)
+    // Actual test begins.
     await expect(
-      addAddressResolver(null, invalidAddress, { user: savedUser })
+      addAddressResolver(null, invalidAddress, { user })
     ).rejects.toThrowError(ValidationError)
+
+    // Cleanup.
+    await User.findByIdAndRemove(user._id)
   })
 
   it('Should not add address when fields do not validate', async () => {
     expect.assertions(1)
+    // Setup.
+    const user = await User.create(dummyUser)
+
     // Invalid zip code.
     const invalidAddress = {
       address1: 'Apt. 272',
@@ -79,35 +123,56 @@ describe('addAddress resolver', () => {
       country: 'Jersey',
     }
 
+    // Actual test begins.
     const savedUser = await User.findById(user._id)
     await expect(
       addAddressResolver(null, invalidAddress, { user: savedUser })
     ).rejects.toThrowError(ValidationError)
+
+    // Cleanup.
+    await User.findByIdAndRemove(user._id)
   })
 
   it('Should not add an address when 5 addresses already exist for a particular user', async () => {
-    expect.assertions(9)
-    const savedUser = await User.findById(user._id)
-
-    // A test above has already added an address.
-    for (let i = 0; i < 4; i += 1) {
+    expect.assertions(1)
+    // Setup.
+    const user = await User.create(dummyUser)
+    for (let i = 0; i < 5; i += 1) {
       // eslint-disable-next-line no-await-in-loop
-      const address = await addAddressResolver(null, dummyAddress, {
-        user: savedUser,
-      })
-      expect(address).toHaveProperty('_id')
-      expect(address).toMatchObject(dummyAddress)
+      await addAddressResolver(null, dummyAddress, { user })
     }
+    const updatedUser = await User.findById(user._id)
 
+    // Actual test begins.
     await expect(
-      addAddressResolver(null, dummyAddress, { user: savedUser })
+      addAddressResolver(null, dummyAddress, { user: updatedUser })
     ).rejects.toThrowError(ValidationError)
+
+    // Cleanup.
+    await Address.deleteMany({ _id: { $in: updatedUser.address } })
+    await User.findByIdAndRemove(user._id)
   })
 })
 
 describe('updateAddress resolver', () => {
-  const user = {
-    _id: '5b39f7bb26670102359a8c10',
+  const dummyUser = {
+    provider: {
+      name: 'google',
+      id: Math.floor(Math.random() * 1000000).toString(),
+    },
+    email: 'dexter.jacobi@gmail.com',
+    firstName: 'Sedrick',
+    lastName: 'Gulgowski',
+  }
+
+  const dummyAddress = {
+    address1: '7745',
+    address2: 'Harvey Village',
+    landmark: 'Near Darian Common',
+    city: 'Markston',
+    state: 'North Carolina',
+    zip: '10774',
+    country: 'Japan',
   }
 
   const updatePayload = {
@@ -142,103 +207,172 @@ describe('updateAddress resolver', () => {
 
   it(`Should update an address from user's list of addresses`, async () => {
     expect.assertions(2)
-    const savedUser = await User.findById(user._id).populate('address')
-    const addressIndex = Math.floor(Math.random() * savedUser.address.length)
+    // Setup.
+    const address = await Address.create(dummyAddress)
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
+    const addressIndex = Math.floor(Math.random() * user.address.length)
 
+    // Actual test begins.
     const updatedAddress = await updateAddressResolver(
       null,
-      merge(updatePayload, { id: savedUser.address[addressIndex]._id }),
-      {
-        user: savedUser,
-      }
+      merge(updatePayload, { id: user.address[addressIndex] }),
+      { user }
     )
 
     expect(updatedAddress).toHaveProperty('_id')
     expect(updatedAddress).toMatchObject(updatePayload)
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await User.findByIdAndRemove(user._id)
   })
 
   it('Should not update an address when there is no user', async () => {
     expect.assertions(1)
-    const savedUser = await User.findById(user._id)
-    const addressIndex = Math.floor(Math.random() * savedUser.address.length)
+    // Setup.
+    const address = await Address.create(dummyAddress)
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
+    const addressIndex = Math.floor(Math.random() * user.address.length)
+
+    // Actual test begins.
     await expect(
       updateAddressResolver(
         null,
-        merge(updatePayload, { id: savedUser.address[addressIndex]._id }),
+        merge(updatePayload, { id: user.address[addressIndex] }),
         {}
       )
-    ).rejects.toThrow('Must be logged in')
+    ).rejects.toThrow(new AuthenticationError())
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await User.findByIdAndRemove(user._id)
+  })
+
+  it('Should not update an address when the user is not authorized to update an address', async () => {
+    expect.assertions(1)
+    // Setup.
+    const address = await Address.create(dummyAddress)
+    const user = await User.create(
+      merge(dummyUser, { roles: ['admin'], address: [address._id] })
+    )
+    const addressIndex = Math.floor(Math.random() * user.address.length)
+
+    // Actual test begins.
+    await expect(
+      updateAddressResolver(
+        null,
+        merge(updatePayload, { id: user.address[addressIndex] }),
+        { user }
+      )
+    ).rejects.toThrow(new AuthorizationError())
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await User.findByIdAndRemove(user._id)
   })
 
   it(`Should not update an address when the address is not in user's list of addresses`, async () => {
     expect.assertions(1)
-    const savedUser = await User.findById(user._id)
+    // Setup.
+    const address = await Address.create(dummyAddress)
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
+
+    // Actual test begins.
     await expect(
       updateAddressResolver(
         null,
         merge(updatePayload, { id: new Types.ObjectId() }),
-        { user: savedUser }
+        { user }
       )
-    ).rejects.toThrow('Unauthorized to update this address')
+    ).rejects.toThrow(new AddressUnassociatedError())
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await User.findByIdAndRemove(user._id)
   })
 
   it('Should not update an address when a field is invalid', async () => {
     expect.assertions(1)
-    const savedUser = await User.findById(user._id)
-    const addressIndex = Math.floor(Math.random() * savedUser.address.length)
+    // Setup.
+    const address = await Address.create(dummyAddress)
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
+    const addressIndex = Math.floor(Math.random() * user.address.length)
+
+    // Actual test begins.
     await expect(
       updateAddressResolver(
         null,
         merge(updatePayload, {
-          id: savedUser.address[addressIndex]._id,
+          id: user.address[addressIndex],
           zip: 'some random gibberish',
         }),
-        { user: savedUser }
+        { user }
       )
     ).rejects.toThrowError(ValidationError)
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await User.findByIdAndRemove(user._id)
   })
 
   it('Should create a new address when an order by the user contains this address', async () => {
-    expect.assertions(3)
-    const savedUser = await User.findById(user._id).populate('address')
-    const addressIndex = Math.floor(Math.random() * savedUser.address.length)
-    const order = await new Order(
+    expect.assertions(4)
+    // Setup.
+    const address = await Address.create(dummyAddress)
+    const order = await Order.create(
       merge(dummyOrder, {
-        shippingAddress: savedUser.address[addressIndex]._id,
+        shippingAddress: address._id,
       })
-    ).save()
-    savedUser.order.push(order._id)
-    const updatedUser = await savedUser.save()
+    )
+    const user = await User.create(
+      merge(dummyUser, { address: [address._id], order: [order._id] })
+    )
+    const addressIndex = Math.floor(Math.random() * user.address.length)
 
+    // Actual test begins.
     const updatedAddress = await updateAddressResolver(
       null,
-      merge(updatePayload, { id: savedUser.address[addressIndex]._id }),
-      { user: updatedUser }
+      merge(updatePayload, { id: user.address[addressIndex] }),
+      { user }
     )
 
     expect(updatedAddress).toHaveProperty('_id')
-    expect(updatedAddress._id).not.toEqual(savedUser.address[addressIndex]._id)
+    expect(updatedAddress._id).not.toEqual(user.address[addressIndex])
 
     const recentlyUpdatedUser = await User.findById(user._id)
     expect(recentlyUpdatedUser.address).not.toContain(
-      savedUser.address[addressIndex]._id
+      user.address[addressIndex]
     )
+    expect(recentlyUpdatedUser.address).toContain(updatedAddress._id)
 
     // Cleanup.
-    await Address.findByIdAndRemove(order.shippingAddress)
-    await Order.findByIdAndRemove(order._id)
-    const updatedOrders = recentlyUpdatedUser.order.filter(
-      currentOrder => currentOrder.toString() !== order._id.toString()
-    )
-    await User.findByIdAndUpdate(recentlyUpdatedUser._id, {
-      order: updatedOrders,
+    await Address.deleteMany({
+      _id: { $in: [address._id, order.shippingAddress] },
     })
+    await Order.findByIdAndRemove(order._id)
+    await User.findByIdAndRemove(user._id)
   })
 })
 
 describe('removeAddress resolver', () => {
-  const user = {
-    _id: '5b39f7bb26670102359a8c10',
+  const dummyUser = {
+    provider: {
+      name: 'google',
+      id: Math.floor(Math.random() * 1000000).toString(),
+    },
+    email: 'dexter.jacobi@gmail.com',
+    firstName: 'Sedrick',
+    lastName: 'Gulgowski',
+  }
+
+  const dummyAddress = {
+    address1: '7745',
+    address2: 'Harvey Village',
+    landmark: 'Near Darian Common',
+    city: 'Markston',
+    state: 'North Carolina',
+    zip: '10774',
+    country: 'Japan',
   }
 
   const dummyOrder = {
@@ -262,91 +396,103 @@ describe('removeAddress resolver', () => {
   }
 
   it(`Should delete an address from user's list of addresses`, async () => {
-    expect.assertions(1)
-    const savedUser = await User.findById(user._id).populate('address')
-    const addressIndex = Math.floor(Math.random() * savedUser.address.length)
+    expect.assertions(2)
+    // Setup.
+    const address = await Address.create(dummyAddress)
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
+
+    // Actual test begins.
     const updatedAddresses = await removeAddressResolver(
       null,
-      { id: savedUser.address[addressIndex]._id },
-      { user: savedUser }
+      { id: address._id },
+      { user }
     )
+    expect(updatedAddresses).not.toContain(address._id)
+    const removedAddress = await Address.findById(address._id)
+    expect(removedAddress).toBeNull()
 
-    expect(updatedAddresses).not.toContain(savedUser.address[addressIndex])
+    // Cleanup.
+    await User.findByIdAndRemove(user._id)
   })
 
   it('Should not delete an address when there is no user', async () => {
     expect.assertions(1)
-    const savedUser = await User.findById(user._id)
-    const addressIndex = Math.floor(Math.random() * savedUser.address.length)
+    // Setup.
+    const address = await Address.create(dummyAddress)
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
+
+    // Actual test begins.
     await expect(
-      removeAddressResolver(
-        null,
-        { id: savedUser.address[addressIndex]._id },
-        {}
-      )
-    ).rejects.toThrow('Must be logged in')
+      removeAddressResolver(null, { id: address._id }, {})
+    ).rejects.toThrow(new AuthenticationError())
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await User.findByIdAndRemove(user._id)
+  })
+
+  it('Should not delete an address when the user is not authorized to delete an address', async () => {
+    // expect.assertions()
+    // Setup.
+    const address = await Address.create(dummyAddress)
+    const user = await User.create(
+      merge(dummyUser, { address: [address._id], roles: ['admin'] })
+    )
+
+    // Actual test begins.
+    await expect(
+      removeAddressResolver(null, { id: address._id }, { user })
+    ).rejects.toThrow(new AuthorizationError())
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await User.findByIdAndRemove(user._id)
   })
 
   it(`Should not delete an address when the address is not in user's list of addresses`, async () => {
     expect.assertions(1)
-    const savedUser = await User.findById(user._id)
+    // Setup.
+    const address = await Address.create(dummyAddress)
+    const user = await User.create(dummyUser)
+
+    // Actual test begins.
     await expect(
-      removeAddressResolver(
-        null,
-        { id: new Types.ObjectId() },
-        { user: savedUser }
-      )
-    ).rejects.toThrow('Unauthorized to delete this address')
+      removeAddressResolver(null, { id: address._id }, { user })
+    ).rejects.toThrow(new AddressUnassociatedError())
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await User.findByIdAndRemove(user._id)
   })
 
   it(`Should delete an address only from user's list of addresses when an order by the user contains this address`, async () => {
     expect.assertions(3)
     // Initial setup.
-    const savedUser = await User.findById(user._id).populate('address')
-    const addressIndex = Math.floor(Math.random() * savedUser.address.length)
-    const order = await new Order(
+    const address = await Address.create(dummyAddress)
+    const order = await Order.create(
       merge(dummyOrder, {
-        shippingAddress: savedUser.address[addressIndex]._id,
+        shippingAddress: address._id,
       })
-    ).save()
-    savedUser.order.push(order._id)
-    const updatedUser = await savedUser.save()
+    )
+    const user = await User.create(
+      merge(dummyUser, { address: [address._id], order: [order._id] })
+    )
 
-    // Remove the address.
+    // Actual test begins.
     const updatedAddresses = await removeAddressResolver(
       null,
-      { id: updatedUser.address[addressIndex]._id },
-      { user: updatedUser }
+      { id: address._id },
+      { user }
     )
 
-    const address = await Address.findById(savedUser.address[addressIndex]._id)
-
-    expect(updatedAddresses).not.toContain(savedUser.address[addressIndex])
-    expect(address).toHaveProperty('_id')
-    expect(address._id).toEqual(savedUser.address[addressIndex]._id)
+    expect(updatedAddresses).not.toContain(address._id)
+    const unremovedAddress = await Address.findById(address._id)
+    expect(unremovedAddress).not.toBeNull()
+    expect(unremovedAddress).toMatchObject(dummyAddress)
 
     // Cleanup.
-    await Address.findByIdAndRemove(order.shippingAddress)
+    await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    const updatedOrders = updatedUser.order.filter(
-      currentOrder => currentOrder.toString() !== order._id.toString()
-    )
-    await User.findByIdAndUpdate(updatedUser._id, { order: updatedOrders })
-  })
-
-  it(`Should remove all addresses from the user's list of addresses`, async () => {
-    expect.assertions(3)
-    // At this point, only user's list of addresses should have three addresses.
-    const savedUser = await User.findById(user._id).populate('address')
-
-    for (let i = 0; i < savedUser.address.length; i += 1) {
-      // eslint-disable-next-line no-await-in-loop
-      const updatedAddresses = await removeAddressResolver(
-        null,
-        { id: savedUser.address[i]._id },
-        { user: savedUser }
-      )
-      expect(updatedAddresses).not.toContain(savedUser.address[i])
-    }
+    await User.findByIdAndRemove(user._id)
   })
 })
