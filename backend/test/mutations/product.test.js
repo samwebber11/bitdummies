@@ -17,14 +17,21 @@ import {
   AuthenticationError,
   InvalidSizeError,
   ProductNotFoundError,
+  AuthorizationError,
 } from '../../errors'
 
 beforeAll(connectMongoose)
 afterAll(disconnectMongoose)
 
 describe('addProduct resolver', () => {
-  const user = {
-    _id: '5b39f7bb26670102359a8c10',
+  const dummyUser = {
+    provider: {
+      name: 'google',
+      id: Math.floor(Math.random() * 1000000).toString(),
+    },
+    email: 'dexter.jacobi@gmail.com',
+    firstName: 'Sedrick',
+    lastName: 'Gulgowski',
   }
 
   const dummyProduct = {
@@ -54,13 +61,18 @@ describe('addProduct resolver', () => {
 
   it('Should add a product', async () => {
     expect.assertions(2)
-    const savedUser = await User.findById(user._id)
-    const product = await addProductResolver(null, dummyProduct, {
-      user: savedUser,
-    })
+    // Setup.
+    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
+
+    // Actual test begins.
+    const product = await addProductResolver(null, dummyProduct, { user })
     expect(product).toHaveProperty('_id')
     // Hack so as to do a deep comparison of the two objects.
     expect(JSON.parse(JSON.stringify(product))).toMatchObject(dummyProduct)
+
+    // Cleanup.
+    await Product.findByIdAndRemove(product._id)
+    await User.findByIdAndRemove(user._id)
   })
 
   it('Should not add a product when there is no user', async () => {
@@ -70,9 +82,23 @@ describe('addProduct resolver', () => {
     )
   })
 
+  it('Should not add a product when the user is not authorized to add a product', async () => {
+    expect.assertions(1)
+    // Setup.
+    const user = await User.create(dummyUser)
+
+    // Actual test begins.
+    await expect(
+      addProductResolver(null, dummyProduct, { user })
+    ).rejects.toThrow(new AuthorizationError())
+
+    // Cleanup.
+    await User.findByIdAndRemove(user._id)
+  })
+
   it(`Should not add a product when 'required' fields are missing`, async () => {
     expect.assertions(1)
-    // Name is going to be missing.
+    // Setup. Missing name.
     const incompleteProduct = pick(dummyProduct, [
       'category',
       'size',
@@ -83,34 +109,52 @@ describe('addProduct resolver', () => {
       'imagePath',
       'delicacy',
     ])
-    const savedUser = await User.findById(user._id)
+    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
+
+    // Actual test begins.
     await expect(
-      addProductResolver(null, incompleteProduct, { user: savedUser })
+      addProductResolver(null, incompleteProduct, { user })
     ).rejects.toThrowError(ValidationError)
+
+    // Cleanup.
+    await User.findByIdAndRemove(user._id)
   })
 
   it(`Should not add a product when 'category' is invalid`, async () => {
     expect.assertions(1)
+    // Setup. Invalid category.
     const invalidCategoryProduct = merge(dummyProduct, {
       category: 'Designer THX',
     })
-    const savedUser = await User.findById(user._id)
+    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
+
+    // Actual test begins.
     await expect(
-      addProductResolver(null, invalidCategoryProduct, { user: savedUser })
+      addProductResolver(null, invalidCategoryProduct, { user })
     ).rejects.toThrowError(ValidationError)
+
+    // Cleanup.
+    await User.findByIdAndRemove(user._id)
   })
 
   it(`Should not add a product with an empty 'size' array`, async () => {
     expect.assertions(1)
+    // Setup. Empty size array.
     const invalidSizeProduct = merge(dummyProduct, { size: [] })
-    const savedUser = await User.findById(user._id)
+    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
+
+    // Actual test begins.
     await expect(
-      addProductResolver(null, invalidSizeProduct, { user: savedUser })
+      addProductResolver(null, invalidSizeProduct, { user })
     ).rejects.toThrowError(ValidationError)
+
+    // Cleanup.
+    await User.findByIdAndRemove(user._id)
   })
 
   it(`Should not add a product when 'size' field is missing`, async () => {
     expect.assertions(1)
+    // Setup. Size field missing.
     const invalidSizeProduct = pick(dummyProduct, [
       'name',
       'category',
@@ -121,14 +165,20 @@ describe('addProduct resolver', () => {
       'imagePath',
       'delicacy',
     ])
-    const savedUser = await User.findById(user._id)
+    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
+
+    // Actual test begins.
     await expect(
-      addProductResolver(null, invalidSizeProduct, { user: savedUser })
+      addProductResolver(null, invalidSizeProduct, { user })
     ).rejects.toThrowError(ValidationError)
+
+    // Cleanup.
+    await User.findByIdAndRemove(user._id)
   })
 
   it(`Should not add a product when 'size' field has objects with duplicate labels`, async () => {
     expect.assertions(1)
+    // Setup. Invalid size.
     const invalidSizeProduct = merge(dummyProduct, {
       size: [
         { label: 'XL', quantityAvailable: 5 },
@@ -136,28 +186,40 @@ describe('addProduct resolver', () => {
         { label: 'XL', quantityAvailable: 8 },
       ],
     })
-    const savedUser = await User.findById(user._id)
+    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
+
+    // Actual test begins.
     await expect(
-      addProductResolver(null, invalidSizeProduct, { user: savedUser })
+      addProductResolver(null, invalidSizeProduct, { user })
     ).rejects.toThrowError(ValidationError)
+
+    // Cleanup.
+    await User.findByIdAndRemove(user._id)
   })
 
   it(`Should not add a product when 'size' field has objects with invalid quantity`, async () => {
     expect.assertions(1)
+    // Setup. Invalid size.
     const invalidSizeProduct = merge(dummyProduct, {
       size: [
         { label: 'XL', quantityAvailable: 5 },
         { label: 'S', quantityAvailable: -15 },
       ],
     })
-    const savedUser = await User.findById(user._id)
+    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
+
+    // Actual test begins.
     await expect(
-      addProductResolver(null, invalidSizeProduct, { user: savedUser })
+      addProductResolver(null, invalidSizeProduct, { user })
     ).rejects.toThrowError(ValidationError)
+
+    // Cleanup.
+    await User.findByIdAndRemove(user._id)
   })
 
   it(`Should add a product when 'description' field is missing`, async () => {
     expect.assertions(4)
+    // Setup.
     const validProduct = pick(dummyProduct, [
       'name',
       'category',
@@ -168,25 +230,30 @@ describe('addProduct resolver', () => {
       'imagePath',
       'delicacy',
     ])
-    const savedUser = await User.findById(user._id)
-    const savedProduct = await addProductResolver(null, validProduct, {
-      user: savedUser,
-    })
-    expect(savedProduct).toHaveProperty('_id')
-    expect(savedProduct).toHaveProperty('description')
-    expect(savedProduct.description).toEqual(
+    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
+
+    // Actual test begins.
+    const product = await addProductResolver(null, validProduct, { user })
+    expect(product).toHaveProperty('_id')
+    expect(product).toHaveProperty('description')
+    expect(product.description).toEqual(
       'A very little short description of the searched product is available.'
     )
-    expect(JSON.parse(JSON.stringify(savedProduct))).toMatchObject(
+    expect(JSON.parse(JSON.stringify(product))).toMatchObject(
       merge(validProduct, {
         description:
           'A very little short description of the searched product is available.',
       })
     )
+
+    // Cleanup.
+    await Product.findByIdAndRemove(product._id)
+    await User.findByIdAndRemove(user._id)
   })
 
   it(`Should add a product when 'discount', 'tax' and 'delicacy' fields are missing`, async () => {
     expect.assertions(7)
+    // Setup.
     const validProduct = pick(dummyProduct, [
       'name',
       'category',
@@ -194,30 +261,41 @@ describe('addProduct resolver', () => {
       'actualPrice',
       'imagePath',
     ])
-    const savedUser = await User.findById(user._id)
-    const savedProduct = await addProductResolver(null, validProduct, {
-      user: savedUser,
-    })
-    expect(savedProduct).toHaveProperty('_id')
-    expect(savedProduct).toHaveProperty('discount')
-    expect(savedProduct).toHaveProperty('tax')
-    expect(savedProduct).toHaveProperty('delicacy')
-    expect(savedProduct.discount).toBe(0)
-    expect(savedProduct.tax).toBe(5)
-    expect(savedProduct.delicacy).toBe('high')
+    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
+
+    // Actual test begins.
+    const product = await addProductResolver(null, validProduct, { user })
+    expect(product).toHaveProperty('_id')
+    expect(product).toHaveProperty('discount')
+    expect(product).toHaveProperty('tax')
+    expect(product).toHaveProperty('delicacy')
+    expect(product.discount).toBe(0)
+    expect(product.tax).toBe(5)
+    expect(product.delicacy).toBe('high')
+
+    // Cleanup.
+    await Product.findByIdAndRemove(product._id)
+    await User.findByIdAndRemove(user._id)
   })
 
   it(`Should not add a product with an empty 'imagePath' array`, async () => {
     expect.assertions(1)
+    // Setup.
     const invalidSizeProduct = merge(dummyProduct, { size: [] })
-    const savedUser = await User.findById(user._id)
+    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
+
+    // Actual test begins.
     await expect(
-      addProductResolver(null, invalidSizeProduct, { user: savedUser })
+      addProductResolver(null, invalidSizeProduct, { user })
     ).rejects.toThrowError(ValidationError)
+
+    // Cleanup.
+    await User.findByIdAndRemove(user._id)
   })
 
   it(`Should not add a product when 'imagePath' field is missing`, async () => {
     expect.assertions(1)
+    // Setup.
     const invalidImageProduct = pick(dummyProduct, [
       'name',
       'category',
@@ -228,14 +306,20 @@ describe('addProduct resolver', () => {
       'tax',
       'delicacy',
     ])
-    const savedUser = await User.findById(user._id)
+    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
+
+    // Actual test begins.
     await expect(
-      addProductResolver(null, invalidImageProduct, { user: savedUser })
+      addProductResolver(null, invalidImageProduct, { user })
     ).rejects.toThrowError(ValidationError)
+
+    // Cleanup.
+    await User.findByIdAndRemove(user._id)
   })
 
   it(`Should not add a product when 'imagePath' field has more than 5 images`, async () => {
     expect.assertions(1)
+    // Setup.
     const tooManyImagesProduct = merge(dummyProduct, {
       imagePath: [
         ...dummyProduct.imagePath,
@@ -244,10 +328,15 @@ describe('addProduct resolver', () => {
         'Fuga qui adipisci et qui',
       ],
     })
-    const savedUser = await User.findById(user._id)
+    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
+
+    // Actual test begins.
     await expect(
-      addProductResolver(null, tooManyImagesProduct, { user: savedUser })
+      addProductResolver(null, tooManyImagesProduct, { user })
     ).rejects.toThrowError(ValidationError)
+
+    // Cleanup.
+    await User.findByIdAndRemove(user._id)
   })
 })
 

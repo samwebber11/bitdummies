@@ -432,7 +432,7 @@ describe('removeAddress resolver', () => {
   })
 
   it('Should not delete an address when the user is not authorized to delete an address', async () => {
-    // expect.assertions()
+    expect.assertions(1)
     // Setup.
     const address = await Address.create(dummyAddress)
     const user = await User.create(
