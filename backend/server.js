@@ -77,7 +77,13 @@ const options = {
   // rejectUnauthorized: false,
 }
 
-const server = https.createServer(options, app)
-server.listen(PORT, () => {
-  console.log(`Express App listening on port ${PORT}`)
-})
+if (process.env.NODE_ENV === 'production') {
+  app.listen(PORT, () => {
+    console.log(`Express App listening on port ${PORT}`)
+  })
+} else {
+  const server = https.createServer(options, app)
+  server.listen(PORT, () => {
+    console.log(`Express App listening on port ${PORT}`)
+  })
+}
