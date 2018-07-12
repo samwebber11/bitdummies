@@ -1,12 +1,11 @@
 import { OAuth2Strategy } from 'passport-google-oauth'
 
-import keys from '../config/keys'
 import User from '../database/models/user'
 
 const GoogleStrategy = new OAuth2Strategy(
   {
-    clientID: keys.google.clientID,
-    clientSecret: keys.google.clientSecret,
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackURL: '/auth/google/callback',
   },
   async (accessToken, refreshToken, profile, done) => {

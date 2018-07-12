@@ -10,10 +10,10 @@ import path from 'path'
 import compression from 'compression'
 import helmet from 'helmet'
 
+import './env'
 import router from './routes'
 import authRouter from './routes/auth'
 import passport from './passport'
-import keys from './config/keys'
 import './database'
 import schema from './graphql/'
 
@@ -30,7 +30,7 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 app.use(
   session({
-    secret: keys.session.secret,
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
   })
@@ -40,7 +40,9 @@ app.use(
 app.use(compression())
 
 // Serving static files/images.
-app.use(express.static(path.join(__dirname, '../client/build')))
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/build')))
+}
 app.use('/static', express.static(path.join(__dirname, 'public')))
 
 // Initialize Passport.
@@ -59,8 +61,8 @@ app.use(
 )
 
 // Routes.
-app.use('/', router)
 app.use('/auth', authRouter)
+app.use('/', router)
 
 // Error handler.
 app.use((err, req, res, next) =>
