@@ -29,6 +29,7 @@
     "compression": "^1.7.2",
     "concurrently": "^3.5.1",
     "cors": "^2.8.4",
+    "dotenv": "^6.0.0",
     "express": "^4.16.3",
     "express-graphql": "^0.6.12",
     "express-session": "^1.15.6",
@@ -53,7 +54,7 @@
     "testRegex": ".*/test/.*.test.js"
   },
   "scripts": {
-    "start": "cd backend && node server.js --exec babel-node --presets env",
+    "start": "cd backend && nodemon server.js --exec babel-node --presets env",
     "start:server": "cd backend && nodemon server.js --exec babel-node --presets env",
     "start:client": "cd client && yarn start",
     "start:dev": "NODE_ENV=development concurrently \"yarn start:server\" \"yarn start:client\"",
