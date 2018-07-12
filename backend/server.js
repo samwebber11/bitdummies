@@ -69,19 +69,19 @@ app.use((err, req, res, next) =>
   res.status(err.status || 500).send(err.message || 'There was a problem')
 )
 
-// Options for certification and encryption.
-const options = {
-  key: fs.readFileSync('./config/privatekey.pem'),
-  cert: fs.readFileSync('./config/certificate.pem'),
-  // requestCert :false,
-  // rejectUnauthorized: false,
-}
-
 if (process.env.NODE_ENV === 'production') {
   app.listen(PORT, () => {
     console.log(`Express App listening on port ${PORT}`)
   })
 } else {
+  // Options for certification and encryption.
+  const options = {
+    key: fs.readFileSync('./config/privatekey.pem'),
+    cert: fs.readFileSync('./config/certificate.pem'),
+    // requestCert :false,
+    // rejectUnauthorized: false,
+  }
+
   const server = https.createServer(options, app)
   server.listen(PORT, () => {
     console.log(`Express App listening on port ${PORT}`)
