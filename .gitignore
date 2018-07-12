@@ -10,7 +10,7 @@ build/
 # config
 privatekey.pem
 certificate.pem
-keys.js
+.env
 
 # misc
 .DS_Store

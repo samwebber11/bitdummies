@@ -1,12 +1,11 @@
 import { Strategy } from 'passport-facebook'
 
-import keys from '../config/keys'
 import User from '../database/models/user'
 
 const FacebookStrategy = new Strategy(
   {
-    clientID: keys.facebook.clientID,
-    clientSecret: keys.facebook.clientSecret,
+    clientID: process.env.FACEBOOK_CLIENT_ID,
+    clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
     callbackURL: '/auth/facebook/callback',
     profileFields: ['id', 'name', 'email'],
   },

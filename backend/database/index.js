@@ -1,9 +1,7 @@
 import mongoose from 'mongoose'
 
-import keys from '../config/keys'
-
 mongoose.Promise = global.Promise
-mongoose.connect(process.env.MONGODB_URI || keys.mongoDB.dbURI)
+mongoose.connect(process.env.MONGODB_URI || process.env.LOCAL_DB_URI)
 
 const dbConnection = mongoose.connection
 dbConnection.on(
