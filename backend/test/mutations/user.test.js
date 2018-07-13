@@ -7,7 +7,7 @@ import {
   updateUserResolver,
   changeUserRoleResolver,
 } from '../../graphql/resolvers/mutations/userResolvers'
-import { merge } from '../../utils'
+import { merge, pick } from '../../utils'
 import { connectMongoose, disconnectMongoose } from '../helper'
 import {
   AuthenticationError,
@@ -28,7 +28,7 @@ describe('updateUser resolver', async () => {
     email: 'dexter.jacobi@gmail.com',
     firstName: 'Sedrick',
     lastName: 'Gulgowski',
-    // phone: '854-965-758'
+    phone: '854-965-'
   }
 
   const updateUser = {
@@ -39,11 +39,11 @@ describe('updateUser resolver', async () => {
   }
 
   it(`Should update user's name`, async () => {
-    expect.assertions(5)
+    expect.assertions(4)
 
     // Setup
-    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
-    const userArgs = merge(updateUser, { id: user._id })
+    const user = await User.create(merge(dummyUser))
+    const userArgs = pick(updateUser, ['firstName', 'lastName'])
 
     // Actual Test begins
     const updatedUser = await updateUserResolver(null, userArgs, { user })
@@ -51,8 +51,6 @@ describe('updateUser resolver', async () => {
     expect(updatedUser).toHaveProperty('_id')
     expect(updatedUser._id).toEqual(user._id)
     expect(updatedUser.name).not.toEqual(`${user.firstName} ${user.lastName}`)
-    expect(updatedUser.name).toEqual(`${updatedUser.firstName} 
-    ${updatedUser.lastName}`)
     expect(updatedUser.phone).toEqual(`${user.phone}`)
 
     // Cleanup.
@@ -63,8 +61,8 @@ describe('updateUser resolver', async () => {
   it(`Should update user's phone`, async () => {
     expect.assertions(5)
     // Setup.
-    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
-    const userArgs = merge(updateUser, { id: user._id })
+    const user = await User.create(merge(dummyUser))
+    const userArgs = pick(updateUser, ['phone'])
 
     // Actual test begins.
     const updatedUser = await updateUserResolver(null, userArgs, { user })
@@ -92,11 +90,11 @@ describe('updateUser resolver', async () => {
   it('Should not update a user when the user is not authorized to update the user', async () => {
     expect.assertions(1)
     // Setup.
-    const user = await User.create(dummyUser)
-    const userArgs = merge(updateUser, { id: user._id })
+    const user = await User.create(merge(dummyUser,{ roles: 'admin' }))
+    const args = pick(user, ['roles'])
 
     // Actual test begins.
-    await expect(updateUserResolver(null, userArgs, { user })).rejects.toThrow(
+    await expect(updateUserResolver(null, args, { user })).rejects.toThrow(
       new AuthorizationError()
     )
 
@@ -147,7 +145,7 @@ describe('changeUserRole resolver', async () => {
   it(`Should update a user's roles`, async () => {
     expect.assertions(4)
     // Setup.
-    const user = await User.create(dummyUser1)
+    const user = await User.create(merge(dummyUser1,{ roles: ['admin'] }))
     const newUser = await User.create(dummyUser2)
     const args = {
       id: newUser._id,
@@ -208,7 +206,7 @@ describe('changeUserRole resolver', async () => {
   it(`Should not update a user's roles when roles aren't provided`, async () => {
     expect.assertions(1)
     // Setup.
-    const user = await User.create(dummyUser1)
+    const user = await User.create(merge(dummyUser1,{ roles: ['admin'] }))
     const newUser = await User.create(dummyUser2)
 
     const args = {
@@ -227,7 +225,7 @@ describe('changeUserRole resolver', async () => {
   it(`Should not update a user's roles when 'roles' field is an empty array`, async () => {
     expect.assertions(1)
     // Setup.
-    const user = await User.create(dummyUser1)
+    const user = await User.create(merge(dummyUser1,{ roles: ['admin'] }))
     const newUser = await User.create(dummyUser2)
 
     const args = {
@@ -247,7 +245,7 @@ describe('changeUserRole resolver', async () => {
   it(`Should not update a user's roles when roles aren't one of the predefined roles`, async () => {
     expect.assertions(1)
     // Setup.
-    const user = await User.create(dummyUser1)
+    const user = await User.create(merge(dummyUser1, { roles: ['admin'] }))
     const newUser = await User.create(dummyUser2)
     const args = {
       id: newUser._id,
@@ -265,7 +263,7 @@ describe('changeUserRole resolver', async () => {
   it(`Should not update a user's roles when ID is invalid`, async () => {
     expect.assertions(1)
     // Setup.
-    const user = await User.create(dummyUser1)
+    const user = await User.create(merge(dummyUser1,{ roles: ['admin'] }))
 
     const args = {
       id: new Types.ObjectId(),
