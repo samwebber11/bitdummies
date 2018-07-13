@@ -6,6 +6,7 @@ import {
   OrderPendingError,
   InvalidRolesError,
 } from '../../../errors/'
+import { pick } from '../../../utils';
 
 // This resolver is not required.
 const addUserResolver = async (parent, args, context) => {
@@ -54,7 +55,10 @@ const updateUserResolver = async (parent, args, context) => {
     if (!user.isAuthorizedTo(UPDATE_USER)) {
       throw new AuthorizationError()
     }
-    const updatedUser = await User.findByIdAndUpdate(user._id, args, {
+    const userArgs = pick(args, ['firstName', 'lastName', 'phone'])
+
+    const updatedUser = await User.findByIdAndUpdate(user._id, 
+      userArgs, {
       new: true,
       runValidators: true,
     })
