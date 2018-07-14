@@ -15,10 +15,6 @@ before_install:
 install:
   - yarn install
 
-before_script:
-  - sleep 15
-  - mongo test-database --eval 'db.users.insertOne({ "_id" : ObjectId("5b39f7bb26670102359a8c10"), "provider" : { "name" : "google", "id" : "553807406" }, "email" : "dummymail@gmail.com", "firstName" : "John", "lastName" : "Stanton", "address" : [ ], "order" : [ ], "phone" : "698-571-4268", "roles" : ["user", "admin"] })'
-
 script:
   - yarn test
 
