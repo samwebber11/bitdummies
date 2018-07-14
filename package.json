@@ -54,6 +54,7 @@
     "testRegex": ".*/test/.*.test.js"
   },
   "scripts": {
+    "heroku-postbuild": "cd client && yarn install && yarn build",
     "start": "cd backend && nodemon server.js --exec babel-node --presets env",
     "start:server": "cd backend && nodemon server.js --exec babel-node --presets env",
     "start:client": "cd client && yarn start",
