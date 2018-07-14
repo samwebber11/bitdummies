@@ -1,4 +1,4 @@
-# BitDummies
+# BitDummies [![Build Status](https://travis-ci.org/BitDummies/bitdummies.svg?branch=master)](https://travis-ci.org/BitDummies/bitdummies)
 
 Create your own 3D mini-me.
 
