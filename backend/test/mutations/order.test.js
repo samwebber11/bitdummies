@@ -32,8 +32,15 @@ beforeAll(connectMongoose)
 afterAll(disconnectMongoose)
 
 describe('addOrder resolver', () => {
-  const user = {
-    _id: '5b39f7bb26670102359a8c10',
+  const dummyUser = {
+    provider: {
+      name: 'google',
+      id: Math.floor(Math.random() * 10000000 + 1).toString(),
+    },
+    email: 'dexter.jacobi@gmail.com',
+    firstName: 'Sedrick',
+    lastName: 'Gulgowski',
+    phone: '866-780-4118',
   }
 
   const dummyProduct1 = {
@@ -133,15 +140,11 @@ describe('addOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    const savedUser = await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
-    // const checkUser = await
-
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
     const orderArgs = { products: orderProducts, shippingAddress: address._id }
-    const order = await addOrderResolver(null, orderArgs, { user: savedUser })
+
+    // Actual test begins.
+    const order = await addOrderResolver(null, orderArgs, { user })
 
     expect(order).toHaveProperty('_id')
     expect(order).toHaveProperty('products')
@@ -170,9 +173,7 @@ describe('addOrder resolver', () => {
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: order._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -199,15 +200,11 @@ describe('addOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    const savedUser = await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
-
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
     const orderArgs = { products: orderProducts, shippingAddress: address._id }
-    const order = await addOrderResolver(null, orderArgs, { user: savedUser })
 
+    // Actual test begins.
+    const order = await addOrderResolver(null, orderArgs, { user })
     expect(order).toHaveProperty('_id')
 
     const updatedUser = await User.findById(user._id, 'order')
@@ -217,9 +214,7 @@ describe('addOrder resolver', () => {
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: order._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -245,20 +240,17 @@ describe('addOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
-
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
     const orderArgs = { products: orderProducts, shippingAddress: address._id }
+
+    // Actual test begins.
     await expect(addOrderResolver(null, orderArgs, {})).rejects.toThrow(
       new AuthenticationError()
     )
 
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
-    await User.findByIdAndUpdate(user._id, { $pull: { address: address._id } })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -267,40 +259,34 @@ describe('addOrder resolver', () => {
     expect.assertions(1)
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    const savedUser = await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
-
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
     const orderArgs = { shippingAddress: address._id }
-    await expect(
-      addOrderResolver(null, orderArgs, { user: savedUser })
-    ).rejects.toThrow(new InvalidArgsError())
+
+    // Actual test begins.
+    await expect(addOrderResolver(null, orderArgs, { user })).rejects.toThrow(
+      new InvalidArgsError()
+    )
 
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
-    await User.findByIdAndUpdate(user._id, { $pull: { address: address._id } })
+    await User.findByIdAndRemove(user._id)
   })
 
   it(`Should not add an order when 'products' field is an empty array`, async () => {
     expect.assertions(1)
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    const savedUser = await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
-
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
     const orderArgs = { products: [], shippingAddress: address._id }
-    await expect(
-      addOrderResolver(null, orderArgs, { user: savedUser })
-    ).rejects.toThrow(new InvalidArgsError())
+
+    // Actual test begins.
+    await expect(addOrderResolver(null, orderArgs, { user })).rejects.toThrow(
+      new InvalidArgsError()
+    )
 
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
-    await User.findByIdAndUpdate(user._id, { $pull: { address: address._id } })
+    await User.findByIdAndRemove(user._id)
   })
 
   it(`Should not add an order when 'products' field is invalid`, async () => {
@@ -324,20 +310,17 @@ describe('addOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    const savedUser = await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
-
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
     const orderArgs = { products: orderProducts, shippingAddress: address._id }
-    await expect(
-      addOrderResolver(null, orderArgs, { user: savedUser })
-    ).rejects.toThrow(new ProductNotFoundError())
+
+    // Actual test begins.
+    await expect(addOrderResolver(null, orderArgs, { user })).rejects.toThrow(
+      new ProductNotFoundError()
+    )
 
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
-    await User.findByIdAndUpdate(user._id, { $pull: { address: address._id } })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -364,20 +347,17 @@ describe('addOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    const savedUser = await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
-
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
     const orderArgs = { products: orderProducts, shippingAddress: address._id }
-    await expect(
-      addOrderResolver(null, orderArgs, { user: savedUser })
-    ).rejects.toThrow(new InvalidQuantityError())
+
+    // Actual test begins.
+    await expect(addOrderResolver(null, orderArgs, { user })).rejects.toThrow(
+      new InvalidQuantityError()
+    )
 
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
-    await User.findByIdAndUpdate(user._id, { $pull: { address: address._id } })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -403,19 +383,16 @@ describe('addOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = new Types.ObjectId()
-    const savedUser = await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
+    const orderArgs = { products: orderProducts, shippingAddress: address._id }
+
+    // Actual test begins.
+    await expect(addOrderResolver(null, orderArgs, { user })).rejects.toThrow(
+      new AddressNotFoundError()
     )
 
-    const orderArgs = { products: orderProducts, shippingAddress: address._id }
-    await expect(
-      addOrderResolver(null, orderArgs, { user: savedUser })
-    ).rejects.toThrow(new AddressNotFoundError())
-
     // Cleanup.
-    await User.findByIdAndUpdate(user._id, { $pull: { address: address._id } })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -442,15 +419,17 @@ describe('addOrder resolver', () => {
     // Get address for the order to be delivered to but not added
     // to user's list of addresses.
     const address = await Address.create(dummyAddress)
-    const savedUser = await User.findById(user._id)
-
+    const user = await User.create(dummyUser)
     const orderArgs = { products: orderProducts, shippingAddress: address._id }
-    await expect(
-      addOrderResolver(null, orderArgs, { user: savedUser })
-    ).rejects.toThrow(new AddressUnassociatedError())
+
+    // Actual test begins.
+    await expect(addOrderResolver(null, orderArgs, { user })).rejects.toThrow(
+      new AddressUnassociatedError()
+    )
 
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -477,14 +456,11 @@ describe('addOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    const savedUser = await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
-
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
     const orderArgs = { products: orderProducts, shippingAddress: address._id }
-    const order = await addOrderResolver(null, orderArgs, { user: savedUser })
+
+    // Actual test begins.
+    const order = await addOrderResolver(null, orderArgs, { user })
 
     expect(order).toHaveProperty('_id')
     expect(order).toHaveProperty('products')
@@ -532,17 +508,22 @@ describe('addOrder resolver', () => {
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: order._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
 })
 
 describe('cancelOrder resolver', () => {
-  const user = {
-    _id: '5b39f7bb26670102359a8c10',
+  const dummyUser = {
+    provider: {
+      name: 'google',
+      id: Math.floor(Math.random() * 10000000 + 1).toString(),
+    },
+    email: 'dexter.jacobi@gmail.com',
+    firstName: 'Sedrick',
+    lastName: 'Gulgowski',
+    phone: '866-780-4118',
   }
 
   const dummyProduct1 = {
@@ -655,11 +636,7 @@ describe('cancelOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the order to the database manually.
     const orderArgs = merge(dummyOrder, {
@@ -686,9 +663,7 @@ describe('cancelOrder resolver', () => {
 
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -718,11 +693,7 @@ describe('cancelOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the order to the database manually.
     const orderArgs = merge(dummyOrder, {
@@ -745,9 +716,7 @@ describe('cancelOrder resolver', () => {
 
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -777,11 +746,7 @@ describe('cancelOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the order to the database manually.
     const orderArgs = merge(dummyOrder, {
@@ -803,9 +768,7 @@ describe('cancelOrder resolver', () => {
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: order._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -835,11 +798,7 @@ describe('cancelOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the order to the database manually.
     const orderArgs = merge(dummyOrder, {
@@ -865,9 +824,7 @@ describe('cancelOrder resolver', () => {
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: order._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -897,11 +854,7 @@ describe('cancelOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the orders to the database manually.
     const orderArgs = merge(dummyOrder, {
@@ -935,9 +888,7 @@ describe('cancelOrder resolver', () => {
 
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: { $in: orderIDs } },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
     await Order.deleteMany({ _id: { $in: orderIDs } })
@@ -968,11 +919,7 @@ describe('cancelOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the order to the database manually but do not save the
     // order ID to the user's list of orders.
@@ -991,17 +938,22 @@ describe('cancelOrder resolver', () => {
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: order._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
 })
 
 describe('removeProductFromOrder resolver', () => {
-  const user = {
-    _id: '5b39f7bb26670102359a8c10',
+  const dummyUser = {
+    provider: {
+      name: 'google',
+      id: Math.floor(Math.random() * 10000000 + 1).toString(),
+    },
+    email: 'dexter.jacobi@gmail.com',
+    firstName: 'Sedrick',
+    lastName: 'Gulgowski',
+    phone: '866-780-4118',
   }
 
   const dummyProduct1 = {
@@ -1114,11 +1066,7 @@ describe('removeProductFromOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the order to the database manually.
     const orderArgs = merge(dummyOrder, {
@@ -1149,9 +1097,7 @@ describe('removeProductFromOrder resolver', () => {
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: order._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -1181,11 +1127,7 @@ describe('removeProductFromOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the order to the database manually.
     const orderArgs = merge(dummyOrder, {
@@ -1226,9 +1168,7 @@ describe('removeProductFromOrder resolver', () => {
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: order._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -1258,11 +1198,7 @@ describe('removeProductFromOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the order to the database manually.
     const orderArgs = merge(dummyOrder, {
@@ -1286,9 +1222,7 @@ describe('removeProductFromOrder resolver', () => {
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: order._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -1318,11 +1252,7 @@ describe('removeProductFromOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the order to the database manually.
     const orderArgs = merge(dummyOrder, {
@@ -1349,9 +1279,7 @@ describe('removeProductFromOrder resolver', () => {
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: order._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -1381,11 +1309,7 @@ describe('removeProductFromOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the order to the database manually.
     const orderArgs = merge(dummyOrder, {
@@ -1425,9 +1349,7 @@ describe('removeProductFromOrder resolver', () => {
 
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: { $in: orderIDs } },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
     await Order.deleteMany({ _id: { $in: orderIDs } })
@@ -1458,11 +1380,7 @@ describe('removeProductFromOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the order to the database manually but do not save the
     // order ID to the user's list of orders.
@@ -1485,9 +1403,7 @@ describe('removeProductFromOrder resolver', () => {
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: order._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -1517,11 +1433,7 @@ describe('removeProductFromOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the order to the database manually.
     const orderArgs = merge(dummyOrder, {
@@ -1544,9 +1456,7 @@ describe('removeProductFromOrder resolver', () => {
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: order._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -1576,11 +1486,7 @@ describe('removeProductFromOrder resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the order to the database manually.
     const orderArgs = merge(dummyOrder, {
@@ -1604,9 +1510,7 @@ describe('removeProductFromOrder resolver', () => {
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: order._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
     await Product.findByIdAndRemove(unorderedProduct._id)
@@ -1614,8 +1518,16 @@ describe('removeProductFromOrder resolver', () => {
 })
 
 describe('changeOrderStatus resolver', () => {
-  const user = {
-    _id: '5b39f7bb26670102359a8c10',
+  const dummyUser = {
+    provider: {
+      name: 'google',
+      id: Math.floor(Math.random() * 10000000 + 1).toString(),
+    },
+    email: 'dexter.jacobi@gmail.com',
+    firstName: 'Sedrick',
+    lastName: 'Gulgowski',
+    phone: '866-780-4118',
+    roles: ['admin'],
   }
 
   const dummyProduct1 = {
@@ -1728,11 +1640,7 @@ describe('changeOrderStatus resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the order to the database manually.
     const orderArgs = merge(dummyOrder, {
@@ -1761,9 +1669,7 @@ describe('changeOrderStatus resolver', () => {
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: order._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -1793,11 +1699,7 @@ describe('changeOrderStatus resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the order to the database manually.
     const orderArgs = merge(dummyOrder, {
@@ -1846,9 +1748,7 @@ describe('changeOrderStatus resolver', () => {
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: order._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -1878,11 +1778,7 @@ describe('changeOrderStatus resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the order to the database manually.
     const orderArgs = merge(dummyOrder, {
@@ -1906,9 +1802,7 @@ describe('changeOrderStatus resolver', () => {
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: order._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -1938,11 +1832,7 @@ describe('changeOrderStatus resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the order to the database manually.
     const orderArgs = merge(dummyOrder, {
@@ -1965,9 +1855,7 @@ describe('changeOrderStatus resolver', () => {
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: order._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
@@ -1997,11 +1885,7 @@ describe('changeOrderStatus resolver', () => {
 
     // Get address for the order to be delivered to.
     const address = await Address.create(dummyAddress)
-    await User.findByIdAndUpdate(
-      user._id,
-      { $push: { address: address._id } },
-      { new: true, runValidators: true }
-    )
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
 
     // Add the order to the database manually.
     const orderArgs = merge(dummyOrder, {
@@ -2015,7 +1899,7 @@ describe('changeOrderStatus resolver', () => {
       { new: true, runValidators: true }
     )
 
-    // Actual test begins. No status provided.
+    // Actual test begins.
     const status = 'Molestias veritatis quis laborum'
     const args = { id: order._id, status }
     await expect(
@@ -2025,20 +1909,62 @@ describe('changeOrderStatus resolver', () => {
     // Cleanup.
     await Address.findByIdAndRemove(address._id)
     await Order.findByIdAndRemove(order._id)
-    await User.findByIdAndUpdate(user._id, {
-      $pull: { address: address._id, order: order._id },
-    })
+    await User.findByIdAndRemove(user._id)
     const productIDs = products.map(product => product._id)
     await Product.deleteMany({ _id: { $in: productIDs } })
   })
 
   it('Should not change the status of an order when order ID is invalid', async () => {
     expect.assertions(1)
-    const savedUser = await User.findById(user._id)
+    // Get products to be added to the order.
+    const products = await Product.insertMany([
+      dummyProduct1,
+      dummyProduct2,
+      dummyProduct3,
+    ])
+    const shuffledProducts = shuffleArray(products).slice(0, 2)
+    const orderProducts = shuffledProducts.map(product => {
+      const { _id, size, actualPrice, tax, discount } = product
+      const sizeIndex = Math.floor(Math.random() * size.length)
+      const { label, quantityAvailable } = size[sizeIndex]
+      return {
+        product: _id,
+        size: label,
+        quantity: quantityAvailable - 2,
+        actualPrice,
+        tax,
+        discount,
+      }
+    })
+
+    // Get address for the order to be delivered to.
+    const address = await Address.create(dummyAddress)
+    const user = await User.create(merge(dummyUser, { address: [address._id] }))
+
+    // Add the order to the database manually.
+    const orderArgs = merge(dummyOrder, {
+      products: orderProducts,
+      shippingAddress: address._id,
+    })
+    const order = await Order.create(orderArgs)
+    const savedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $push: { order: order._id } },
+      { new: true, runValidators: true }
+    )
+
+    // Actual test begins.
     const status = 'On its way'
     const args = { id: new Types.ObjectId(), status }
     await expect(
       changeOrderStatusResolver(null, args, { user: savedUser })
     ).toMatchObject({})
+
+    // Cleanup.
+    await Address.findByIdAndRemove(address._id)
+    await Order.findByIdAndRemove(order._id)
+    await User.findByIdAndRemove(user._id)
+    const productIDs = products.map(product => product._id)
+    await Product.deleteMany({ _id: { $in: productIDs } })
   })
 })
