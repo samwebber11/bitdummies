@@ -18,8 +18,7 @@ import {
 beforeAll(connectMongoose)
 afterAll(disconnectMongoose)
 
-describe('updateUser resolver', async () => {
-
+describe('updateUser resolver', () => {
   const dummyUser = {
     provider: {
       name: 'google',
@@ -28,41 +27,42 @@ describe('updateUser resolver', async () => {
     email: 'dexter.jacobi@gmail.com',
     firstName: 'Sedrick',
     lastName: 'Gulgowski',
-    phone: '854-965-'
+    phone: '657-588-9534',
   }
 
-  const updateUser = {
-    email: 'dexter.jacobi@gmail.com',
+  const updatePayload = {
+    email: 'marcus_runte68@yahoo.com',
     firstName: 'Icie',
     lastName: 'Little',
     phone: '378-748-5678',
   }
 
   it(`Should update user's name`, async () => {
-    expect.assertions(4)
+    expect.assertions(5)
+    // Setup.
+    const user = await User.create(dummyUser)
+    const userArgs = pick(updatePayload, ['firstName', 'lastName'])
 
-    // Setup
-    const user = await User.create(merge(dummyUser))
-    const userArgs = pick(updateUser, ['firstName', 'lastName'])
-
-    // Actual Test begins
+    // Actual test begins.
     const updatedUser = await updateUserResolver(null, userArgs, { user })
 
     expect(updatedUser).toHaveProperty('_id')
     expect(updatedUser._id).toEqual(user._id)
-    expect(updatedUser.name).not.toEqual(`${user.firstName} ${user.lastName}`)
-    expect(updatedUser.phone).toEqual(`${user.phone}`)
+    expect(updatedUser.name).not.toEqual(user.name)
+    expect(updatedUser.name).toEqual(
+      `${updatePayload.firstName} ${updatePayload.lastName}`
+    )
+    expect(updatedUser.phone).toEqual(user.phone)
 
     // Cleanup.
     await User.findByIdAndRemove(user._id)
   })
-  // console.log(dummyUser.name)
 
   it(`Should update user's phone`, async () => {
     expect.assertions(5)
     // Setup.
-    const user = await User.create(merge(dummyUser))
-    const userArgs = pick(updateUser, ['phone'])
+    const user = await User.create(dummyUser)
+    const userArgs = pick(updatePayload, ['phone'])
 
     // Actual test begins.
     const updatedUser = await updateUserResolver(null, userArgs, { user })
@@ -70,8 +70,8 @@ describe('updateUser resolver', async () => {
     expect(updatedUser).toHaveProperty('_id')
     expect(updatedUser._id).toEqual(user._id)
     expect(updatedUser.phone).not.toEqual(user.phone)
-    expect(updatedUser.phone).toEqual('378-748-5678')
-    expect(updatedUser.name).toEqual(`${user.name}`)
+    expect(updatedUser.phone).toEqual(updatePayload.phone)
+    expect(updatedUser.name).toEqual(user.name)
 
     // Cleanup.
     await User.findByIdAndRemove(user._id)
@@ -80,21 +80,24 @@ describe('updateUser resolver', async () => {
   it('Should not update when there is no user', async () => {
     expect.assertions(1)
     // Setup.
-    const userArgs = updateUser
+    const user = await User.create(dummyUser)
 
-    await expect(updateUserResolver(null, userArgs, {})).rejects.toThrow(
+    await expect(updateUserResolver(null, updatePayload, {})).rejects.toThrow(
       new AuthenticationError()
     )
+
+    // Cleanup.
+    await User.findByIdAndRemove(user._id)
   })
 
   it('Should not update a user when the user is not authorized to update the user', async () => {
     expect.assertions(1)
     // Setup.
-    const user = await User.create(merge(dummyUser,{ roles: 'admin' }))
-    const args = pick(user, ['roles'])
+    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
+    const userArgs = pick(updatePayload, ['firstName', 'lastName', 'phone'])
 
     // Actual test begins.
-    await expect(updateUserResolver(null, args, { user })).rejects.toThrow(
+    await expect(updateUserResolver(null, userArgs, { user })).rejects.toThrow(
       new AuthorizationError()
     )
 
@@ -105,14 +108,18 @@ describe('updateUser resolver', async () => {
   it('Should not update when a field is invalid', async () => {
     expect.assertions(1)
     // Setup.
-    const user = await User.create(merge(dummyUser, { roles: ['admin'] }))
-    const userArgs = merge(updateUser, { id: user._id })
-    userArgs.phone = 'posiqueeli sehmad'
+    const user = await User.create(dummyUser)
+    const userArgs = merge(
+      pick(updatePayload, ['firstName', 'lastName', 'phone']),
+      {
+        phone: 'posiqueeli sehmad',
+      }
+    )
 
     // Actual test begins.
-    await expect(updateUserResolver(null, userArgs, { user })).rejects.toThrow( 
-    ValidationError
-  )
+    await expect(updateUserResolver(null, userArgs, { user })).rejects.toThrow(
+      ValidationError
+    )
 
     // Cleanup.
     await User.findByIdAndRemove(user._id)
@@ -120,7 +127,7 @@ describe('updateUser resolver', async () => {
 })
 
 describe('changeUserRole resolver', async () => {
-  const dummyUser1 = {
+  const dummyUser = {
     provider: {
       name: 'google',
       id: Math.floor(Math.random() * 10000000 + 1).toString(),
@@ -128,9 +135,10 @@ describe('changeUserRole resolver', async () => {
     email: 'dexter.jacobi@gmail.com',
     firstName: 'Sedrick',
     lastName: 'Gulgowski',
+    roles: ['admin'],
   }
 
-  const dummyUser2 = {
+  const dummyUnauthorizedUser = {
     provider: {
       name: 'google',
       id: Math.floor(Math.random() * 10000000 + 1).toString(),
@@ -138,22 +146,20 @@ describe('changeUserRole resolver', async () => {
     email: 'Ernestine66@hotmail.com',
     firstName: 'Oma',
     lastName: 'Emard',
-    roles: ['user'],
   }
-
 
   it(`Should update a user's roles`, async () => {
     expect.assertions(4)
     // Setup.
-    const user = await User.create(merge(dummyUser1,{ roles: ['admin'] }))
-    const newUser = await User.create(dummyUser2)
-    const args = {
-      id: newUser._id,
+    const user = await User.create(dummyUser)
+    const unauthorizedUser = await User.create(dummyUnauthorizedUser)
+    const userArgs = {
+      id: unauthorizedUser._id,
       roles: ['user', 'admin'],
     }
 
     // Actual test begins.
-    const updatedUser = await changeUserRoleResolver(null, args, { user })
+    const updatedUser = await changeUserRoleResolver(null, userArgs, { user })
 
     expect(updatedUser).toHaveProperty('roles')
     expect(updatedUser.roles).toHaveLength(2)
@@ -161,117 +167,117 @@ describe('changeUserRole resolver', async () => {
     expect(updatedUser.roles).toContain('admin')
 
     // Cleanup.
-    await User.deleteMany({ id: { $in: [newUser._id, user._id]}})
+    await User.deleteMany({ _id: { $in: [user._id, unauthorizedUser._id] } })
   })
 
   it(`Should not update a user's roles when there is no user to authorize`, async () => {
     expect.assertions(1)
     // Setup.
-    const newUser = await User.create(dummyUser2)
-    const args = {
-      id: newUser._id,
+    const unauthorizedUser = await User.create(dummyUnauthorizedUser)
+    const userArgs = {
+      id: unauthorizedUser._id,
       roles: ['user', 'admin'],
     }
 
     // Actual test begins.
-    await expect(changeUserRoleResolver(null, args, {})).rejects.toThrow(
+    await expect(changeUserRoleResolver(null, userArgs, {})).rejects.toThrow(
       new AuthenticationError()
     )
 
     // Cleanup.
-    await User.findByIdAndRemove(newUser._id)
+    await User.findByIdAndRemove(unauthorizedUser._id)
   })
 
   it(`Should not update a user's roles when the user trying to change user's role is not authorized`, async () => {
     expect.assertions(1)
     // Setup.
-    const unauthorizedUser = await User.create(
-      merge(dummyUser2, { email: 'Antonetta_Prohaska94@yahoo.com' })
-    )
-    const newUser = await User.create(dummyUser2)
-    const args = {
-      id: newUser._id,
+    const user = await User.create(merge(dummyUser, { roles: ['user'] }))
+    const unauthorizedUser = await User.create(dummyUnauthorizedUser)
+    const userArgs = {
+      id: unauthorizedUser._id,
       roles: ['user', 'admin'],
     }
 
     // Actual test begins
     await expect(
-      changeUserRoleResolver(null, args, { user: unauthorizedUser })
+      changeUserRoleResolver(null, userArgs, { user })
     ).rejects.toThrow(new AuthorizationError())
 
     // Cleanup.
-    await User.deleteMany({ _id: { $in: [unauthorizedUser._id, newUser._id] } })
+    await User.deleteMany({ _id: { $in: [user._id, unauthorizedUser._id] } })
   })
 
   it(`Should not update a user's roles when roles aren't provided`, async () => {
     expect.assertions(1)
     // Setup.
-    const user = await User.create(merge(dummyUser1,{ roles: ['admin'] }))
-    const newUser = await User.create(dummyUser2)
-
-    const args = {
-      id: newUser._id,
+    const user = await User.create(dummyUser)
+    const unauthorizedUser = await User.create(dummyUnauthorizedUser)
+    const userArgs = {
+      id: unauthorizedUser._id,
     }
 
     // Actual test begins.
-    await expect(changeUserRoleResolver(null, args, { user })).rejects.toThrow(
-      new InvalidRolesError()
-    )
+    await expect(
+      changeUserRoleResolver(null, userArgs, { user })
+    ).rejects.toThrow(new InvalidRolesError())
 
     // Cleanup.
-    await User.deleteMany({ _id: { $in: [user._id, newUser._id] }})
+    await User.deleteMany({ _id: { $in: [user._id, unauthorizedUser._id] } })
   })
 
   it(`Should not update a user's roles when 'roles' field is an empty array`, async () => {
     expect.assertions(1)
     // Setup.
-    const user = await User.create(merge(dummyUser1,{ roles: ['admin'] }))
-    const newUser = await User.create(dummyUser2)
+    const user = await User.create(dummyUser)
+    const unauthorizedUser = await User.create(dummyUnauthorizedUser)
 
-    const args = {
-      id: newUser._id,
+    const userArgs = {
+      id: unauthorizedUser._id,
       roles: [],
     }
 
     // Actual test begins.
     await expect(
-      changeUserRoleResolver(null, args, { user })
+      changeUserRoleResolver(null, userArgs, { user })
     ).rejects.toThrowError(ValidationError)
 
     // Cleanup.
-    await User.deleteMany({ _id: { $in: [newUser._id, user._id] }})
+    await User.deleteMany({ _id: { $in: [unauthorizedUser._id, user._id] } })
   })
 
   it(`Should not update a user's roles when roles aren't one of the predefined roles`, async () => {
     expect.assertions(1)
     // Setup.
-    const user = await User.create(merge(dummyUser1, { roles: ['admin'] }))
-    const newUser = await User.create(dummyUser2)
-    const args = {
-      id: newUser._id,
+    const user = await User.create(dummyUser)
+    const unauthorizedUser = await User.create(dummyUnauthorizedUser)
+    const userArgs = {
+      id: unauthorizedUser._id,
       roles: ['blah', 'lorem', 'ipsum'],
     }
+
     // Actual test begins.
     await expect(
-      changeUserRoleResolver(null, args, { user })
+      changeUserRoleResolver(null, userArgs, { user })
     ).rejects.toThrowError(ValidationError)
 
     // Cleanup.
-    await User.deleteMany({ _id: { $in: [newUser._id, user._id] }})
+    await User.deleteMany({ _id: { $in: [user._id, unauthorizedUser._id] } })
   })
 
   it(`Should not update a user's roles when ID is invalid`, async () => {
     expect.assertions(1)
     // Setup.
-    const user = await User.create(merge(dummyUser1,{ roles: ['admin'] }))
-
-    const args = {
+    const user = await User.create(dummyUser)
+    const userArgs = {
       id: new Types.ObjectId(),
       roles: ['user', 'admin'],
     }
 
     // Actual test begins
-    const updatedUser = await changeUserRoleResolver(null, args, { user })
+    const updatedUser = await changeUserRoleResolver(null, userArgs, { user })
     expect(updatedUser).toBeNull()
+
+    // Cleanup.
+    await User.findByIdAndRemove(user._id)
   })
 })

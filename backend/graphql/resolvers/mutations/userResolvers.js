@@ -1,12 +1,12 @@
 import User from '../../../database/models/user'
 import { CHANGE_USER_ROLE, UPDATE_USER } from '../../../database/operations'
+import { pick } from '../../../utils'
 import {
   AuthenticationError,
   AuthorizationError,
   OrderPendingError,
   InvalidRolesError,
 } from '../../../errors/'
-import { pick } from '../../../utils';
 
 // This resolver is not required.
 const addUserResolver = async (parent, args, context) => {
@@ -57,8 +57,7 @@ const updateUserResolver = async (parent, args, context) => {
     }
     const userArgs = pick(args, ['firstName', 'lastName', 'phone'])
 
-    const updatedUser = await User.findByIdAndUpdate(user._id, 
-      userArgs, {
+    const updatedUser = await User.findByIdAndUpdate(user._id, userArgs, {
       new: true,
       runValidators: true,
     })
