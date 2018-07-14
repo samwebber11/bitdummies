@@ -54,7 +54,7 @@
     "testRegex": ".*/test/.*.test.js"
   },
   "scripts": {
-    "postinstall": "cd client && yarn build",
+    "postinstall": "cd client && yarn install && yarn build",
     "start": "cd backend && nodemon server.js --exec babel-node --presets env",
     "start:server": "cd backend && nodemon server.js --exec babel-node --presets env",
     "start:client": "cd client && yarn start",
