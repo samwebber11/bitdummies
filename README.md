@@ -1,4 +1,4 @@
-# BitDummies
+# BitDummies [![Build Status](https://travis-ci.org/BitDummies/bitdummies.svg?branch=master)](https://travis-ci.org/BitDummies/bitdummies)
 
 Create your own 3D mini-me.
 
@@ -36,35 +36,6 @@ $ yarn start:dev
 
 ### Instructions for running tests
 
-- Open a MongoDB Daemon by running `mongod` in a terminal.
-- Open another terminal window and run:
-
-```zsh
-$ mongo --host localhost:27017
-> show dbs
-...
-...
-> use test-database
-switched to db test-database
-
-> db.users.insert({
-    "_id" : ObjectId("5b39f7bb26670102359a8c10"),
-    "provider" : {
-    "name" : "google",
-    "id" : "553807406"
-    },
-    "email" : "dummymail@gmail.com",
-    "firstName" : "John",
-    "lastName" : "Stanton",
-    "address" : [ ],
-    "order" : [ ],
-    "phone" : "698-571-4268"
-  })
-WriteResult({ "nInserted" : 1 })
-
->
-```
-
 - In the project root folder, run:
 
 ```zsh
@@ -75,13 +46,14 @@ yarn run v1.7.0
 
 **Warning:** Some tests might fail the first couple times as Jest tries to figure out the best way to run the tests. It does this because tests perform asynchronous operations on the database. Troubleshooting steps are given below:
 
-- First go back to the mongo shell and run:
+- Open a MongoDB Daemon by running `mongod` in a terminal.
+- Open another terminal window and run:
 
 ```zsh
+$ mongo --host localhost:27017
 > show dbs
 ...
 ...
-test-database
 
 > use test-database
 switched to db test-database
@@ -105,12 +77,8 @@ users
 > db.products.remove({})
 ...
 
-> db.users.update({ "_id" : ObjectId("5b39f7bb26670102359a8c10") }, {
-    $set: {
-      address: [],
-      order: [],
-    }
-  })
+> db.users.remove({})
+...
 ```
 
 **Note:** The last 4 commands must be run each time any test fails.

@@ -1,5 +1,6 @@
 import User from '../../../database/models/user'
 import { CHANGE_USER_ROLE, UPDATE_USER } from '../../../database/operations'
+import { pick } from '../../../utils'
 import {
   AuthenticationError,
   AuthorizationError,
@@ -54,7 +55,9 @@ const updateUserResolver = async (parent, args, context) => {
     if (!user.isAuthorizedTo(UPDATE_USER)) {
       throw new AuthorizationError()
     }
-    const updatedUser = await User.findByIdAndUpdate(user._id, args, {
+    const userArgs = pick(args, ['firstName', 'lastName', 'phone'])
+
+    const updatedUser = await User.findByIdAndUpdate(user._id, userArgs, {
       new: true,
       runValidators: true,
     })
