@@ -328,7 +328,6 @@ describe('orders resolver', () => {
       { orderBy: { orderedAt: 'asc' } },
       { user }
     )
-    console.log(fetchedOrderList)
     expect(fetchedOrderList.length).not.toBeNull()
     expect(fetchedOrderList[0].status).toBe(orderList[0].status)
     expect(fetchedOrderList[0].payment.status).toBe(orderList[0].payment.status)
