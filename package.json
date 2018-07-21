@@ -4,7 +4,7 @@
   "description": "Website for selling Crypto merchandise",
   "private": true,
   "engines": {
-    "node": "10.1.0"
+    "node": ""
   },
   "author": "Mohit Sakhuja",
   "license": "MIT",
