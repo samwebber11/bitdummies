@@ -11,7 +11,7 @@ import {
 } from '../../graphql/resolvers/queries/addressResolvers'
 import { address } from '../../graphql/queries/addressQueries'
 
-import { pick } from '../../utils'
+import { pick, compareValues } from '../../utils'
 import { connectMongoose, disconnectMongoose } from '../helper'
 
 beforeAll(connectMongoose)
@@ -68,26 +68,6 @@ describe('addresses resolver', () => {
     state: 'Bangkok',
     zip: '10220',
     country: 'Thailand',
-  }
-
-  // Dynamic Sorting Function.
-  function compareValues(key, order = 'asc') {
-    return function(a, b) {
-      if (!a.hasOwnProperty(key) || !b.hasOwnProperty(key)) {
-        return 0
-      }
-
-      const varA = typeof a[key] === 'string' ? a[key].toUpperCase() : a[key]
-      const varB = typeof b[key] === 'string' ? b[key].toUpperCase() : b[key]
-
-      let comparison = 0
-      if (varA > varB) {
-        comparison = 1
-      } else if (varA < varB) {
-        comparison = -1
-      }
-      return order === 'desc' ? comparison * -1 : comparison
-    }
   }
 
   it('Should fetch a list of all addresses', async () => {
